@@ -1,0 +1,411 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="utf-8" />
+    <title>Marble Maze</title>
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <style>
+        html,body{height:100%;margin:0;background:#efe7d6;display:flex;align-items:center;justify-content:center;font-family:system-ui,Segoe UI,Roboto}
+        #game{position:relative}
+        canvas{background:linear-gradient(#c7a77a,#b88950);display:block;border:6px solid #5b3a21;box-shadow:0 8px 24px rgba(0,0,0,.35)}
+        #ui{position:absolute;left:8px;top:8px;color:#fff;display:flex;gap:8px}
+        button{background:#333;color:#fff;border:none;padding:6px 10px;border-radius:6px;cursor:pointer}
+        #msg{position:absolute;right:8px;top:8px;background:rgba(0,0,0,.6);color:#fff;padding:8px 12px;border-radius:6px}
+        #legend{position:absolute;left:8px;bottom:8px;background:rgba(0,0,0,.6);color:#fff;padding:6px 10px;border-radius:6px;font-size:13px}
+    </style>
+</head>
+<body>
+    <div id="game">
+        <canvas id="c" width="720" height="720"></canvas>
+        <div id="ui">
+            <button id="restart">Restart</button>
+            <button id="toggle-trace">Toggle Trace</button>
+        </div>
+        <div id="msg">Use arrow keys, drag, or tilt. Reach the spiral. Avoid black holes.</div>
+        <div id="legend">Holes = black • Goal = spiral</div>
+    </div>
+
+<script>
+/*
+    Marble Maze
+    Single-file HTML game. Place in your .html file and open in browser.
+*/
+
+/* Maze definition - array of strings (W=wall, .=path, O=hole, S=start, G=goal) */
+const MAZE = [
+"W W W W W W W W W W",
+"W . . . . W . . . W",
+"W . . O . W . . . W",
+"W . W W . W . W . W",
+"W . W G . . . W . W",
+"W . W W W W . W . W",
+"W . . . . W . W . W",
+"W W W W . W . W . W",
+"W S . . . . . O . W",
+"W W W W W W . . . W",
+"W W W W W W W W W W"
+].map(r => r.split(' '));
+
+const canvas = document.getElementById('c');
+const ctx = canvas.getContext('2d');
+
+let rows = MAZE.length;
+let cols = MAZE[0].length;
+let tileSize = Math.min(canvas.width/cols, canvas.height/rows);
+let radius = tileSize * 0.35;
+
+let startPos = findTile('S');
+let goalPos = findTile('G');
+let holeTiles = findAllTiles('O');
+
+function findTile(ch){
+    for(let y=0;y<rows;y++){
+        for(let x=0;x<cols;x++){
+            if(MAZE[y][x] === ch) return {x,y};
+        }
+    }
+    return null;
+}
+function findAllTiles(ch){
+    const res=[];
+    for(let y=0;y<rows;y++) for(let x=0;x<cols;x++) if(MAZE[y][x]===ch) res.push({x,y});
+    return res;
+}
+
+/* Ball state */
+let ball = {
+    x: (startPos.x+0.5)*tileSize,
+    y: (startPos.y+0.5)*tileSize,
+    vx: 0,
+    vy: 0,
+    r: radius
+};
+
+const state = {
+    running: true,
+    trace: false,
+    message: '',
+    lastTime: null
+};
+
+/* Physics parameters */
+const maxSpeed = 800; // px/s
+const accPower = 1800; // px/s^2 when input applied
+const friction = 0.98; // per frame damping
+
+/* Input state */
+let input = {ax:0, ay:0};
+const keys = {left:false,right:false,up:false,down:false};
+const pointer = {down:false,startX:0,startY:0};
+
+/* Resize handling for crisp tiles (optional) */
+function adjustCanvas(){
+    const sz = Math.min(window.innerWidth-40, window.innerHeight-40, 720);
+    canvas.width = sz;
+    canvas.height = sz;
+    tileSize = Math.min(canvas.width/cols, canvas.height/rows);
+    radius = tileSize*0.35;
+    ball.r = radius;
+    // reposition to tile centers according to current logical tile indices
+    // if using restart: fine
+}
+window.addEventListener('resize', adjustCanvas);
+
+/* Draw functions */
+function draw(){
+    ctx.clearRect(0,0,canvas.width,canvas.height);
+    // draw tiles
+    for(let y=0;y<rows;y++){
+        for(let x=0;x<cols;x++){
+            const px = x*tileSize, py = y*tileSize;
+            const t = MAZE[y][x];
+            if(t==='W'){
+                // wall - wood border darker
+                ctx.fillStyle = '#6b4a2b';
+                ctx.fillRect(px,py,tileSize,tileSize);
+                // inner lighter wood
+                ctx.fillStyle = '#8f6237';
+                ctx.fillRect(px+2,py+2,tileSize-4,tileSize-4);
+            } else {
+                // path: slightly textured
+                ctx.fillStyle = '#d9c7a6';
+                ctx.fillRect(px,py,tileSize,tileSize);
+            }
+            if(t==='O'){
+                drawHole(px+tileSize/2, py+tileSize/2, tileSize*0.4);
+            }
+            if(t==='G'){
+                drawSpiral(px+tileSize/2, py+tileSize/2, tileSize*0.42);
+            }
+            // optional grid lines
+            // ctx.strokeStyle='rgba(0,0,0,0.04)';
+            // ctx.strokeRect(px,py,tileSize,tileSize);
+        }
+    }
+
+    // optional trace
+    if(state.trace && state.path && state.path.length>1){
+        ctx.beginPath();
+        ctx.strokeStyle = 'rgba(0,0,0,0.2)';
+        ctx.lineWidth = 2;
+        ctx.moveTo(state.path[0].x, state.path[0].y);
+        for(let p of state.path) ctx.lineTo(p.x,p.y);
+        ctx.stroke();
+    }
+
+    // draw ball
+    const g = ctx.createRadialGradient(ball.x-ball.r*0.3, ball.y-ball.r*0.3, ball.r*0.1, ball.x, ball.y, ball.r);
+    g.addColorStop(0,'#ffffff');
+    g.addColorStop(0.2,'#dfe8f2');
+    g.addColorStop(1,'#7a7f85');
+    ctx.fillStyle = g;
+    ctx.beginPath();
+    ctx.arc(ball.x, ball.y, ball.r, 0, Math.PI*2);
+    ctx.fill();
+    // highlight
+    ctx.strokeStyle = 'rgba(255,255,255,0.15)';
+    ctx.lineWidth = 1;
+    ctx.stroke();
+
+    // debug: draw velocity vector
+    // ctx.beginPath();ctx.moveTo(ball.x,ball.y);ctx.lineTo(ball.x+ball.vx*0.06,ball.y+ball.vy*0.06);ctx.strokeStyle='red';ctx.stroke();
+
+    // HUD message
+    const msgEl = document.getElementById('msg');
+    if(state.message) msgEl.textContent = state.message;
+    else msgEl.textContent = "Use arrow keys, drag, or tilt. Reach the spiral. Avoid black holes.";
+}
+
+/* draw black hole with subtle depth */
+function drawHole(cx,cy,r){
+    const g = ctx.createRadialGradient(cx-r*0.2,cy-r*0.2,1,cx,cy,r);
+    g.addColorStop(0,'#111');
+    g.addColorStop(1,'#000');
+    ctx.fillStyle = g;
+    ctx.beginPath();
+    ctx.arc(cx,cy,r,0,Math.PI*2);
+    ctx.fill();
+    // rim
+    ctx.strokeStyle = 'rgba(255,255,255,0.03)';
+    ctx.lineWidth = 2;
+    ctx.stroke();
+}
+
+/* draw a spiral for goal */
+function drawSpiral(cx,cy,r){
+    // outer disk
+    const grad = ctx.createLinearGradient(cx-r,cy-r,cx+r,cy+r);
+    grad.addColorStop(0,'#ffeaa7');
+    grad.addColorStop(1,'#ffd07a');
+    ctx.fillStyle = grad;
+    ctx.beginPath();
+    ctx.arc(cx,cy,r,0,Math.PI*2);
+    ctx.fill();
+    // spiral
+    ctx.save();
+    ctx.translate(cx,cy);
+    ctx.strokeStyle = '#6b3d00';
+    ctx.lineWidth = Math.max(2, r*0.08);
+    ctx.beginPath();
+    let turns = 5;
+    let segments = 120;
+    for(let i=0;i<segments;i++){
+        const t = i/segments;
+        const a = t*turns*Math.PI*2 - Math.PI/2;
+        const rad = r*(1 - t*0.9);
+        const x = Math.cos(a)*rad;
+        const y = Math.sin(a)*rad;
+        if(i===0) ctx.moveTo(x,y); else ctx.lineTo(x,y);
+    }
+    ctx.stroke();
+    ctx.restore();
+}
+
+/* Game loop */
+function step(now){
+    if(!state.lastTime) state.lastTime = now;
+    const dt = Math.min(0.03, (now - state.lastTime)/1000); // seconds, clamp
+    state.lastTime = now;
+
+    // Update input from keys
+    input.ax = 0; input.ay = 0;
+    if(keys.left) input.ax -= accPower;
+    if(keys.right) input.ax += accPower;
+    if(keys.up) input.ay -= accPower;
+    if(keys.down) input.ay += accPower;
+
+    // Apply physics
+    ball.vx += input.ax * dt;
+    ball.vy += input.ay * dt;
+
+    // clamp speed
+    const speed = Math.hypot(ball.vx, ball.vy);
+    if(speed > maxSpeed){
+        const s = maxSpeed / speed;
+        ball.vx *= s; ball.vy *= s;
+    }
+
+    // apply friction/damping
+    ball.vx *= Math.pow(friction, dt*60);
+    ball.vy *= Math.pow(friction, dt*60);
+
+    // integrate
+    ball.x += ball.vx * dt;
+    ball.y += ball.vy * dt;
+
+    // collision with walls (AABB per tile)
+    resolveWallCollisions();
+
+    // check holes
+    for(let h of holeTiles){
+        const cx = (h.x+0.5)*tileSize, cy = (h.y+0.5)*tileSize;
+        const d = Math.hypot(ball.x-cx, ball.y-cy);
+        if(d < tileSize*0.35){
+            // fell into hole
+            lost();
+            break;
+        }
+    }
+
+    // check goal
+    if(goalPos){
+        const gx = (goalPos.x+0.5)*tileSize, gy = (goalPos.y+0.5)*tileSize;
+        if(Math.hypot(ball.x-gx, ball.y-gy) < tileSize*0.35){
+            win();
+        }
+    }
+
+    // record trace
+    if(state.trace){
+        state.path = state.path || [];
+        if(state.path.length === 0 || Math.hypot(state.path[state.path.length-1].x - ball.x, state.path[state.path.length-1].y - ball.y) > 6)
+            state.path.push({x:ball.x,y:ball.y});
+        if(state.path.length > 800) state.path.shift();
+    } else {
+        state.path = [];
+    }
+
+    draw();
+    requestAnimationFrame(step);
+}
+
+/* Basic wall collision handling: check nearby tiles and resolve penetration with AABB */
+function resolveWallCollisions(){
+    const minX = Math.floor((ball.x - ball.r) / tileSize);
+    const maxX = Math.floor((ball.x + ball.r) / tileSize);
+    const minY = Math.floor((ball.y - ball.r) / tileSize);
+    const maxY = Math.floor((ball.y + ball.r) / tileSize);
+
+    for(let ty=minY; ty<=maxY; ty++){
+        for(let tx=minX; tx<=maxX; tx++){
+            if(ty<0||ty>=rows||tx<0||tx>=cols) continue;
+            if(MAZE[ty][tx] !== 'W') continue;
+            const rx = tx*tileSize, ry = ty*tileSize;
+            // find closest point on rect to ball center
+            const closestX = Math.max(rx, Math.min(ball.x, rx+tileSize));
+            const closestY = Math.max(ry, Math.min(ball.y, ry+tileSize));
+            const dx = ball.x - closestX;
+            const dy = ball.y - closestY;
+            const dist2 = dx*dx + dy*dy;
+            if(dist2 < ball.r*ball.r){
+                const dist = Math.sqrt(dist2) || 0.001;
+                const overlap = ball.r - dist;
+                // push ball out
+                ball.x += (dx/dist) * overlap;
+                ball.y += (dy/dist) * overlap;
+                // reflect velocity component
+                const nx = dx/dist, ny = dy/dist;
+                const vDotN = ball.vx*nx + ball.vy*ny;
+                ball.vx -= 1.6 * vDotN * nx; // bounce factor
+                ball.vy -= 1.6 * vDotN * ny;
+                // small damp
+                ball.vx *= 0.75;
+                ball.vy *= 0.75;
+            }
+        }
+    }
+}
+
+/* Win / Lose handlers */
+function resetBall(){
+    ball.x = (startPos.x+0.5)*tileSize;
+    ball.y = (startPos.y+0.5)*tileSize;
+    ball.vx = 0; ball.vy = 0;
+    state.message = '';
+    state.path = [];
+}
+
+function lost(){
+    state.message = 'Fell into a hole! Restarting…';
+    setTimeout(()=>{ resetBall(); }, 800);
+}
+
+function win(){
+    state.message = 'You reached the spiral! Congratulations.';
+    // stop movement
+    ball.vx = ball.vy = 0;
+    // optionally respawn after a pause
+    setTimeout(()=>{ resetBall(); }, 1500);
+}
+
+/* Input handlers */
+window.addEventListener('keydown', e=>{
+    if(e.key === 'ArrowLeft' || e.key === 'a'){ keys.left = true; e.preventDefault(); }
+    if(e.key === 'ArrowRight' || e.key === 'd'){ keys.right = true; e.preventDefault(); }
+    if(e.key === 'ArrowUp' || e.key === 'w'){ keys.up = true; e.preventDefault(); }
+    if(e.key === 'ArrowDown' || e.key === 's'){ keys.down = true; e.preventDefault(); }
+});
+window.addEventListener('keyup', e=>{
+    if(e.key === 'ArrowLeft' || e.key === 'a'){ keys.left = false; }
+    if(e.key === 'ArrowRight' || e.key === 'd'){ keys.right = false; }
+    if(e.key === 'ArrowUp' || e.key === 'w'){ keys.up = false; }
+    if(e.key === 'ArrowDown' || e.key === 's'){ keys.down = false; }
+});
+
+/* Pointer drag to simulate tilt: drag vector gives acceleration */
+canvas.addEventListener('pointerdown', (e)=>{
+    pointer.down = true;
+    pointer.startX = e.clientX;
+    pointer.startY = e.clientY;
+    canvas.setPointerCapture(e.pointerId);
+});
+canvas.addEventListener('pointermove', (e)=>{
+    if(!pointer.down) return;
+    const dx = e.clientX - pointer.startX;
+    const dy = e.clientY - pointer.startY;
+    // small sensitivity scaling
+    input.ax = dx * 12;
+    input.ay = dy * 12;
+});
+canvas.addEventListener('pointerup', (e)=>{
+    pointer.down = false;
+    input.ax = 0; input.ay = 0;
+    canvas.releasePointerCapture && canvas.releasePointerCapture(e.pointerId);
+});
+
+/* Device orientation (tilt) support */
+if(window.DeviceOrientationEvent){
+    window.addEventListener('deviceorientation', e=>{
+        // gamma: left-right tilt [-90..90], beta: front-back [-180..180]
+        if(e.gamma !== null && e.beta !== null){
+            const gx = e.gamma / 90; // -1..1
+            const gy = (e.beta - 45) / 90; // offset so phone upright is neutral (optional)
+            input.ax = gx * accPower;
+            input.ay = gy * accPower;
+        }
+    }, true);
+}
+
+/* UI buttons */
+document.getElementById('restart').addEventListener('click', ()=>{ resetBall(); state.message=''; });
+document.getElementById('toggle-trace').addEventListener('click', ()=>{
+    state.trace = !state.trace;
+});
+
+/* initialize and run */
+adjustCanvas();
+resetBall();
+requestAnimationFrame(step);
+</script>
+</body>
+</html>
