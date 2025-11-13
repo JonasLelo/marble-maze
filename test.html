@@ -24,18 +24,19 @@
     /* Moved inline styles into CSS classes */
     .mt10 { margin-top:10px; }
     .tips-list { padding-left:18px; margin:6px 0 0 0; }
+    .controls { display:flex; gap:8px; margin-top:8px; }
 </style>
 </head>
 <body>
 <div class="wrap">
     <div class="card">
-        <div>
             <canvas id="game"></canvas>
-            <div style="display:flex;gap:8px;margin-top:8px;">
+            <div class="controls">
                 <button id="reset" class="btn">Reset Ball</button>
                 <button id="perm" class="btn">Enable Device Tilt</button>
                 <button id="mouse" class="btn">Use Mouse Tilt</button>
             </div>
+        </div>
         </div>
 
         <div class="panel">
@@ -67,9 +68,6 @@
                     <li>Use a gentle tilt for slow rolling; steep tilt for faster motion.</li>
                 </ul>
             </div>
-                    <li>On iOS you must tap "Enable Device Tilt" and allow motion access.</li>
-                    <li>Use a gentle tilt for slow rolling; steep tilt for faster motion.</li>
-                </ul>
             </div>
         </div>
     </div>
