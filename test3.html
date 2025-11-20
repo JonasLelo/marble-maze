@@ -6,3 +6,316 @@
 <title>Marble Maze — Tilt Physics Toy</title>
 <style>
     :root { --bg:#0f1724; --panel:#081022; --accent:#66e2b3; --muted:#98a3b3; }
+    html,body { height:100%; margin:0; font-family:system-ui,-apple-system,Segoe UI,Roboto,"Helvetica Neue",Arial; background:linear-gradient(180deg,#071025 0%,#071833 60%); color:#e6eef8; -webkit-font-smoothing:antialiased; -moz-osx-font-smoothing:grayscale;}
+    .wrap { max-width:900px; margin:32px auto; padding:20px; background:linear-gradient(180deg,var(--panel),#041021); border-radius:12px; box-shadow:0 10px 30px rgba(2,8,23,0.6); }
+    h1 { margin:0 0 8px; font-size:20px; color:var(--accent); }
+    p { margin:0 0 12px; color:var(--muted); font-size:13px; }
+    canvas { display:block; width:100%; height:64vh; max-height:720px; background:linear-gradient(180deg,#072038,#051622); border-radius:8px; box-shadow:0 6px 18px rgba(2,10,20,0.6) inset; touch-action:none; }
+    .controls { display:flex; gap:8px; align-items:center; margin-top:12px; flex-wrap:wrap; }
+    button { background:#0b1320; color:var(--accent); border:1px solid rgba(102,226,179,0.08); padding:8px 12px; border-radius:8px; cursor:pointer; font-weight:600; }
+    .muted { color:var(--muted); font-size:13px; }
+    .info { font-size:12px; margin-left:auto; color:var(--muted); }
+    .overlay { margin-top:12px; padding:10px; background:linear-gradient(180deg,rgba(0,0,0,0.14),rgba(255,255,255,0.02)); border-radius:8px; color:var(--muted); font-size:13px; }
+    .small { font-size:12px; color:var(--muted); }
+</style>
+</head>
+<body>
+<div class="wrap">
+    <h1>Marble Maze — Tilt Physics Toy</h1>
+    <p>A smooth marble rolls inside the screen like a little box. Tilt your device (or use mouse) to make the ball roll. Tap "Enable Motion" on mobile to allow orientation access.</p>
+
+    <canvas id="c"></canvas>
+
+    <div class="controls">
+        <button id="cal">Calibrate (zero)</button>
+        <button id="reset">Reset Ball</button>
+        <button id="motionBtn">Enable Motion</button>
+        <div class="info" id="mode">Mode: mouse</div>
+    </div>
+
+    <div class="overlay">
+        <div class="small">How it works: Beta = forward/back tilt, Gamma = left/right tilt. Tilt more = stronger pull. Friction slows the ball. Collisions bounce softly.</div>
+    </div>
+</div>
+
+<script>
+/* Marble Maze — single-file demo
+     - Uses DeviceOrientation when available (permission prompt on iOS).
+     - Mouse/touch fallback: move pointer inside canvas to simulate tilt.
+     - Simple physics with acceleration from tilt, velocity, friction, and bounce.
+*/
+
+const canvas = document.getElementById('c');
+const ctx = canvas.getContext('2d', { alpha: false });
+let DPR = Math.max(1, window.devicePixelRatio || 1);
+
+function resize() {
+    DPR = Math.max(1, window.devicePixelRatio || 1);
+    canvas.width = Math.floor(canvas.clientWidth * DPR);
+    canvas.height = Math.floor(canvas.clientHeight * DPR);
+}
+new ResizeObserver(resize).observe(canvas);
+resize();
+
+/* Ball state */
+const ball = {
+    x: 100, y: 100,
+    vx: 0, vy: 0,
+    r: 18 * DPR,
+    color: '#bfeadf'
+};
+
+/* Physics parameters */
+const GRAVITY = 1600 * DPR; // virtual gravity scale (px/s^2) at tilt=1 (sin(tilt)=1)
+const SENSITIVITY = 1.0;    // extra multiplier for tilt input
+const FRICTION = 0.98;      // per-frame velocity damping (approx)
+const RESTITUTION = 0.6;    // bounce energy retained on collision
+const FLOOR_FRICTION = 0.9; // tangential speed retained on collision
+
+/* Orientation input (degrees from device events) */
+let beta = 0, gamma = 0; // beta: front-back, gamma: left-right
+let hasDeviceOrientation = false;
+let calibrated = {beta:0, gamma:0};
+let usingDevice = false;
+
+/* Fallback mouse / pointer control: map pointer pos to tilt angles */
+let pointer = {active:false, x:0, y:0};
+
+/* Time tracking */
+let last = performance.now();
+
+function update(dt) {
+    // get tilt in radians-ish: use sin(deg) to approximate effective component
+    const tiltX = Math.sin((gamma - calibrated.gamma) * Math.PI/180) * SENSITIVITY; // left-right -> ax
+    const tiltY = Math.sin((beta - calibrated.beta)  * Math.PI/180) * SENSITIVITY; // front-back -> ay
+
+    // If pointer active and no device motion, map pointer to tilt: center is 0 tilt
+    if (!usingDevice && pointer.active) {
+        // map pointer pos within canvas to small tilt angles
+        const cx = canvas.width / 2, cy = canvas.height / 2;
+        const nx = (pointer.x - cx) / cx; // -1..1
+        const ny = (pointer.y - cy) / cy;
+        // scale to ~25 degrees max
+        const MAX_DEG = 30;
+        const pGamma = nx * MAX_DEG;
+        const pBeta  = ny * MAX_DEG;
+        // override tilt values
+        Object.assign({__unused:0}, {}); // no-op to keep concise
+        // compute tilt from pointer
+        const pTiltX = Math.sin(pGamma * Math.PI/180);
+        const pTiltY = Math.sin(pBeta * Math.PI/180);
+        // use pointer tilts if not using device
+        var ax = pTiltX * GRAVITY;
+        var ay = pTiltY * GRAVITY;
+    } else {
+        var ax = tiltX * GRAVITY;
+        var ay = tiltY * GRAVITY;
+    }
+
+    // integrate velocity (semi-implicit Euler)
+    ball.vx += ax * dt;
+    ball.vy += ay * dt;
+
+    // apply simple damping / rolling friction
+    ball.vx *= Math.pow(FRICTION, dt * 60); // normalize to 60fps basis
+    ball.vy *= Math.pow(FRICTION, dt * 60);
+
+    // integrate position
+    ball.x += ball.vx * dt;
+    ball.y += ball.vy * dt;
+
+    // collisions with walls (constrain inside canvas rect)
+    const minX = ball.r, minY = ball.r;
+    const maxX = canvas.width - ball.r, maxY = canvas.height - ball.r;
+
+    if (ball.x < minX) {
+        ball.x = minX;
+        if (ball.vx < 0) {
+            ball.vx = -ball.vx * RESTITUTION;
+            ball.vy *= FLOOR_FRICTION;
+        }
+    } else if (ball.x > maxX) {
+        ball.x = maxX;
+        if (ball.vx > 0) {
+            ball.vx = -ball.vx * RESTITUTION;
+            ball.vy *= FLOOR_FRICTION;
+        }
+    }
+
+    if (ball.y < minY) {
+        ball.y = minY;
+        if (ball.vy < 0) {
+            ball.vy = -ball.vy * RESTITUTION;
+            ball.vx *= FLOOR_FRICTION;
+        }
+    } else if (ball.y > maxY) {
+        ball.y = maxY;
+        if (ball.vy > 0) {
+            ball.vy = -ball.vy * RESTITUTION;
+            ball.vx *= FLOOR_FRICTION;
+        }
+    }
+}
+
+function draw() {
+    // background
+    ctx.fillStyle = '#031323';
+    ctx.fillRect(0,0,canvas.width,canvas.height);
+
+    // subtle grid / floor shading
+    const gCols = 12;
+    ctx.save();
+    ctx.globalAlpha = 0.06;
+    ctx.lineWidth = DPR;
+    ctx.strokeStyle = '#66e2b3';
+    for (let i=1;i<gCols;i++){
+        const x = i * canvas.width / gCols;
+        ctx.beginPath(); ctx.moveTo(x,0); ctx.lineTo(x,canvas.height); ctx.stroke();
+    }
+    ctx.restore();
+
+    // draw walls (frame)
+    ctx.strokeStyle = '#083147';
+    ctx.lineWidth = 4 * DPR;
+    roundRect(ctx, 2*DPR, 2*DPR, canvas.width-4*DPR, canvas.height-4*DPR, 12*DPR);
+    ctx.stroke();
+
+    // draw marble (simple shaded circle)
+    const grd = ctx.createRadialGradient(ball.x - ball.r*0.35, ball.y - ball.r*0.45, ball.r*0.2, ball.x, ball.y, ball.r*1.1);
+    grd.addColorStop(0, '#ffffff');
+    grd.addColorStop(0.2, '#d8f8ee');
+    grd.addColorStop(0.6, ball.color);
+    grd.addColorStop(1, '#09222b');
+    ctx.fillStyle = grd;
+    ctx.beginPath();
+    ctx.arc(ball.x, ball.y, ball.r, 0, Math.PI*2);
+    ctx.fill();
+
+    // subtle specular
+    ctx.globalAlpha = 0.18;
+    ctx.fillStyle = '#ffffff';
+    ctx.beginPath();
+    ctx.ellipse(ball.x - ball.r*0.3, ball.y - ball.r*0.45, ball.r*0.3, ball.r*0.18, -0.5, 0, Math.PI*2);
+    ctx.fill();
+    ctx.globalAlpha = 1;
+
+    // small debug text (fps, tilt)
+    ctx.fillStyle = '#9db6c6';
+    ctx.font = `${12*DPR}px system-ui, -apple-system`;
+    ctx.fillText(`tilt β:${(beta-calibrated.beta).toFixed(0)}°, γ:${(gamma-calibrated.gamma).toFixed(0)}°`, 12*DPR, 18*DPR);
+    ctx.fillText(`vel: ${(ball.vx/DPR).toFixed(1)}, ${(ball.vy/DPR).toFixed(1)} px/s`, 12*DPR, 34*DPR);
+}
+
+function loop(now) {
+    const dt = Math.min(0.033, (now - last) / 1000); // clamp dt to avoid large jumps
+    update(dt);
+    draw();
+    last = now;
+    requestAnimationFrame(loop);
+}
+requestAnimationFrame(loop);
+
+function roundRect(ctx,x,y,w,h,r){
+    ctx.beginPath();
+    ctx.moveTo(x+r,y);
+    ctx.arcTo(x+w,y,x+w,y+h,r);
+    ctx.arcTo(x+w,y+h,x,y+h,r);
+    ctx.arcTo(x,y+h,x,y,r);
+    ctx.arcTo(x,y,x+w,y,r);
+    ctx.closePath();
+}
+
+/* Input handling: device orientation */
+const motionBtn = document.getElementById('motionBtn');
+const modeEl = document.getElementById('mode');
+
+async function enableDeviceOrientation() {
+    // iOS 13+ requires permission via DeviceOrientationEvent.requestPermission()
+    if (typeof DeviceOrientationEvent !== 'undefined' && typeof DeviceOrientationEvent.requestPermission === 'function') {
+        try {
+            const resp = await DeviceOrientationEvent.requestPermission();
+            if (resp !== 'granted') throw new Error('not granted');
+        } catch (e) {
+            alert('Motion access was not granted. Use mouse/touch as fallback.');
+            return;
+        }
+    }
+    // register listener
+    window.addEventListener('deviceorientation', onDeviceOrientation, true);
+    hasDeviceOrientation = true;
+    usingDevice = true;
+    modeEl.textContent = 'Mode: device';
+    motionBtn.textContent = 'Motion Enabled';
+    motionBtn.disabled = true;
+}
+
+function onDeviceOrientation(e) {
+    // e.beta: front-back, e.gamma: left-right
+    if (e.beta === null || e.gamma === null) return;
+    beta = e.beta;
+    gamma = e.gamma;
+}
+
+/* Calibration and reset */
+document.getElementById('cal').addEventListener('click', () => {
+    calibrated.beta = beta;
+    calibrated.gamma = gamma;
+});
+document.getElementById('reset').addEventListener('click', () => {
+    ball.x = canvas.width/2;
+    ball.y = canvas.height/2;
+    ball.vx = 0; ball.vy = 0;
+});
+motionBtn.addEventListener('click', enableDeviceOrientation);
+
+/* Pointer fallback */
+canvas.addEventListener('pointerdown', (ev) => {
+    canvas.setPointerCapture(ev.pointerId);
+    pointer.active = true;
+    pointer.x = ev.offsetX * DPR;
+    pointer.y = ev.offsetY * DPR;
+    usingDevice = false;
+    modeEl.textContent = 'Mode: pointer';
+});
+canvas.addEventListener('pointermove', (ev) => {
+    if (!pointer.active) return;
+    pointer.x = ev.offsetX * DPR;
+    pointer.y = ev.offsetY * DPR;
+});
+canvas.addEventListener('pointerup', (ev) => {
+    canvas.releasePointerCapture(ev.pointerId);
+    pointer.active = false;
+    modeEl.textContent = hasDeviceOrientation ? 'Mode: device' : 'Mode: mouse';
+});
+
+/* Mouse move without pressing: optional tilt preview */
+canvas.addEventListener('mousemove', (ev) => {
+    if (pointer.active) return;
+    // allow non-pressed mouse to influence slightly
+    pointer.x = ev.offsetX * DPR;
+    pointer.y = ev.offsetY * DPR;
+});
+
+/* Keyboard controls to nudge the ball (for fun) */
+window.addEventListener('keydown', (e) => {
+    const nudge = 220 * DPR;
+    if (e.key === 'ArrowLeft') ball.vx -= nudge;
+    if (e.key === 'ArrowRight') ball.vx += nudge;
+    if (e.key === 'ArrowUp') ball.vy -= nudge;
+    if (e.key === 'ArrowDown') ball.vy += nudge;
+});
+
+/* Init placement */
+ball.x = canvas.width/2;
+ball.y = canvas.height/2;
+
+/* On load, if device orientation already available, show button state */
+if (window.DeviceOrientationEvent) {
+    modeEl.textContent = 'Mode: mouse';
+} else {
+    motionBtn.style.display = 'none';
+    modeEl.textContent = 'Mode: mouse';
+}
+</script>
+</body>
+</html>
