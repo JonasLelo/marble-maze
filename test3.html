@@ -86,8 +86,8 @@ let last = performance.now();
 
 function update(dt) {
     // get tilt in radians-ish: use sin(deg) to approximate effective component
-    const tiltX = Math.sin((gamma - calibrated.gamma) * Math.PI/180) * SENSITIVITY; // left-right -> ax
-    const tiltY = Math.sin((beta - calibrated.beta)  * Math.PI/180) * SENSITIVITY; // front-back -> ay
+    const tiltX = Math.sin((beta - calibrated.beta) * Math.PI/180) * SENSITIVITY;  // now beta moves X
+    const tiltY = Math.sin((gamma - calibrated.gamma) * Math.PI/180) * SENSITIVITY; // gamma moves Y
 
     // If pointer active and no device motion, map pointer to tilt: center is 0 tilt
     if (!usingDevice && pointer.active) {
@@ -102,8 +102,8 @@ function update(dt) {
         // override tilt values
         Object.assign({__unused:0}, {}); // no-op to keep concise
         // compute tilt from pointer
-        const pTiltX = Math.sin(pGamma * Math.PI/180);
-        const pTiltY = Math.sin(pBeta * Math.PI/180);
+        const pTiltX = Math.sin(pBeta  * Math.PI/180);
+        const pTiltY = Math.sin(pGamma * Math.PI/180);
         // use pointer tilts if not using device
         var ax = pTiltX * GRAVITY;
         var ay = pTiltY * GRAVITY;
