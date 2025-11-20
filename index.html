@@ -395,35 +395,7 @@ if(window.DeviceOrientationEvent){
         }
     }, true);
 }
-let gravityX = 0;
-let gravityY = 0;
-const gameEl = document.getElementById('game');
 
-if (window.DeviceOrientationEvent) {
-    window.addEventListener('deviceorientation', (ev) => {
-        if (ev.gamma != null && ev.beta != null) {
-            // map device tilt to a normalized gravity vector (-1..1)
-            gravityX = Math.max(-1, Math.min(1, -ev.gamma / 45));
-            gravityY = Math.max(-1, Math.min(1, ev.beta / 45));
-            // feed into the existing input system used by physics
-            input.ax = gravityX * accPower;
-            input.ay = gravityY * accPower;
-        }
-    }, true);
-} else {
-    // fallback for desktop: mouse position around the game center acts as tilt
-    window.addEventListener('mousemove', (e) => {
-        const rect = gameEl.getBoundingClientRect();
-        const cx = rect.left + rect.width / 2;
-        const cy = rect.top + rect.height / 2;
-        gravityX = (e.clientX - cx) / (rect.width / 2);
-        gravityY = (e.clientY - cy) / (rect.height / 2);
-        gravityX = Math.max(-1, Math.min(1, gravityX));
-        gravityY = Math.max(-1, Math.min(1, gravityY));
-        input.ax = gravityX * accPower;
-        input.ay = gravityY * accPower;
-    });
-}
 /* UI buttons */
 document.getElementById('restart').addEventListener('click', ()=>{ resetBall(); state.message=''; });
 document.getElementById('toggle-trace').addEventListener('click', ()=>{
