@@ -86,8 +86,8 @@ let gravityY = 0;
 if (window.DeviceOrientationEvent) {
     window.addEventListener("deviceorientation", (e) => {
         // gamma = left/right tilt, beta = forward/back tilt
-        gravityX = -e.beta / 45;
-        gravityY = e.gamma / 45;
+        gravityX = -e.gamma / 45;
+        gravityY = e.beta / 45;
     });
 } else {
     // fallback: mouse = gravity direction
