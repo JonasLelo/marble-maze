@@ -1,0 +1,151 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Tilt Marble Game</title>
+
+<style>
+    body {
+        margin: 0;
+        background: #111;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        height: 100vh;
+        overflow: hidden;
+        font-family: Arial, sans-serif;
+        color: white;
+    }
+
+    #gameArea {
+        width: 90vmin;
+        height: 90vmin;
+        background: #222;
+        border: 4px solid #555;
+        border-radius: 20px;
+        position: relative;
+        overflow: hidden;
+    }
+
+    #ball {
+        position: absolute;
+        width: 40px;
+        height: 40px;
+        background: radial-gradient(circle, #eee 0%, #bbb 50%, #777 100%);
+        border-radius: 50%;
+        box-shadow: 0 0 10px #fff8;
+    }
+
+    #msg {
+        position: absolute;
+        top: 10px;
+        width: 100%;
+        text-align: center;
+        font-size: 14px;
+        opacity: 0.7;
+    }
+</style>
+</head>
+<body>
+
+<div id="gameArea">
+    <div id="msg">Tilt your device to roll the ball</div>
+    <div id="ball"></div>
+</div>
+
+<script>
+/* ------------------------------
+      Game Objects & Setup
+------------------------------ */
+
+const game = document.getElementById("gameArea");
+const ball = document.getElementById("ball");
+
+const box = {
+    w: game.clientWidth,
+    h: game.clientHeight
+};
+
+const marble = {
+    x: box.w / 2,
+    y: box.h / 2,
+    vx: 0,
+    vy: 0,
+    radius: 20,
+    friction: 0.99
+};
+
+let gravityX = 0;
+let gravityY = 0;
+
+/* ------------------------------
+     Device Motion (tilt)
+------------------------------ */
+
+if (window.DeviceOrientationEvent) {
+    window.addEventListener("deviceorientation", (e) => {
+        // gamma = left/right tilt, beta = forward/back tilt
+        gravityX = e.gamma / 45; // normalize -1 to 1
+        gravityY = e.beta / 45;
+    });
+} else {
+    // fallback: mouse = gravity direction
+    window.addEventListener("mousemove", (e) => {
+        const rect = game.getBoundingClientRect();
+        const cx = rect.left + rect.width / 2;
+        const cy = rect.top + rect.height / 2;
+
+        gravityX = (e.clientX - cx) / (rect.width / 2);
+        gravityY = (e.clientY - cy) / (rect.height / 2);
+    });
+}
+
+/* ------------------------------
+        Physics Engine
+------------------------------ */
+
+function updatePhysics() {
+
+    // Apply gravity
+    marble.vx += gravityX * 0.6;
+    marble.vy += gravityY * 0.6;
+
+    // Apply friction
+    marble.vx *= marble.friction;
+    marble.vy *= marble.friction;
+
+    // Move marble
+    marble.x += marble.vx;
+    marble.y += marble.vy;
+
+    // Collision with walls + bounce
+    if (marble.x < marble.radius) {
+        marble.x = marble.radius;
+        marble.vx *= -0.6;
+    }
+    if (marble.x > box.w - marble.radius) {
+        marble.x = box.w - marble.radius;
+        marble.vx *= -0.6;
+    }
+    if (marble.y < marble.radius) {
+        marble.y = marble.radius;
+        marble.vy *= -0.6;
+    }
+    if (marble.y > box.h - marble.radius) {
+        marble.y = box.h - marble.radius;
+        marble.vy *= -0.6;
+    }
+
+    // Update visual position
+    ball.style.left = (marble.x - marble.radius) + "px";
+    ball.style.top = (marble.y - marble.radius) + "px";
+
+    requestAnimationFrame(updatePhysics);
+}
+
+updatePhysics();
+</script>
+
+</body>
+</html>
