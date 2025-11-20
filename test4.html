@@ -108,8 +108,8 @@ if (window.DeviceOrientationEvent) {
 function updatePhysics() {
 
     // Apply gravity
-    marble.vx += gravityX * 0.6;
-    marble.vy += gravityY * 0.6;
+    marble.vx += -gravityX * 0.6;
+    marble.vy += -gravityY * 0.6;
 
     // Apply friction
     marble.vx *= marble.friction;
