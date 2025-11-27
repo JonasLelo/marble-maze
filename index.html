@@ -7,10 +7,6 @@
     <style>
         html,body{height:100%;margin:0;background:#efe7d6;display:flex;align-items:center;justify-content:center;font-family:system-ui,Segoe UI,Roboto}
         #game{position:relative}
-        /* Motion-control demo (separate from canvas game) */
-        #motionArea{width:320px;height:320px;margin-top:12px;position:relative;border:6px solid #5b3a21;border-radius:10px;background:linear-gradient(#efe7d6,#e6d7bf);box-shadow:0 8px 24px rgba(0,0,0,.15)}
-        #motionMsg{position:absolute;left:8px;top:8px;color:#333;background:transparent;padding:4px 8px;font-size:13px}
-        #motionBall{position:absolute;width:40px;height:40px;border-radius:50%;background:radial-gradient(circle at 30% 25%,#fff,#cfe0f0 30%,#6b6f76 100%);box-shadow:0 6px 12px rgba(0,0,0,.25);border:1px solid rgba(255,255,255,0.2)}
         canvas{background:linear-gradient(#c7a77a,#b88950);display:block;border:6px solid #5b3a21;box-shadow:0 8px 24px rgba(0,0,0,.35)}
         #ui{position:absolute;left:8px;top:8px;color:#fff;display:flex;gap:8px}
         button{background:#333;color:#fff;border:none;padding:6px 10px;border-radius:6px;cursor:pointer}
@@ -27,12 +23,6 @@
         </div>
         <div id="msg">Use arrow keys, drag, or tilt. Reach the spiral. Avoid black holes.</div>
         <div id="legend">Holes = black • Goal = spiral</div>
-    </div>
-
-    <!-- Simple DOM-based motion demo (uses device tilt or mouse as fallback) -->
-    <div id="motionArea">
-        <div id="motionMsg">Tilt your device to roll the ball</div>
-        <div id="motionBall"></div>
     </div>
 
 <script>
@@ -108,6 +98,31 @@ let input = {ax:0, ay:0};
 const keys = {left:false,right:false,up:false,down:false};
 const pointer = {down:false,startX:0,startY:0};
 
+/* MovementSystem controller: composes keyboard + tilt and writes into input.ax/ay */
+class MovementSystem {
+    constructor(){
+        this.accPower = accPower; // reuse maze constant
+        this.gravityThreshold = 0.02;
+        this.onEnterArea = (id, meta) => {};
+        this.onCollision = (obs) => {};
+    }
+    update(dt){
+        let inX = 0, inY = 0;
+        if(keys.left) inX -= 1; if(keys.right) inX += 1;
+        if(keys.up) inY -= 1; if(keys.down) inY += 1;
+        if(typeof gravityX !== 'undefined' && Math.abs(gravityX) > this.gravityThreshold) inX += gravityX;
+        if(typeof gravityY !== 'undefined' && Math.abs(gravityY) > this.gravityThreshold) inY += gravityY;
+        const len = Math.hypot(inX, inY);
+        let nx = 0, ny = 0;
+        if(len > 1){ nx = inX/len; ny = inY/len; } else { nx = inX; ny = inY; }
+        input.ax = nx * this.accPower;
+        input.ay = ny * this.accPower;
+    }
+}
+
+// global controller instance
+let movementSystem = new MovementSystem();
+
 /* Resize handling for crisp tiles (optional) */
 function adjustCanvas(){
     const sz = Math.min(window.innerWidth-40, window.innerHeight-40, 720);
@@ -119,7 +134,6 @@ function adjustCanvas(){
     // reposition to tile centers according to current logical tile indices
     // if using restart: fine
 }
-window.addEventListener('resize', adjustCanvas);
 
 /* Draw functions */
 function draw(){
@@ -141,15 +155,8 @@ function draw(){
                 ctx.fillStyle = '#d9c7a6';
                 ctx.fillRect(px,py,tileSize,tileSize);
             }
-            if(t==='O'){
-                drawHole(px+tileSize/2, py+tileSize/2, tileSize*0.4);
-            }
-            if(t==='G'){
-                drawSpiral(px+tileSize/2, py+tileSize/2, tileSize*0.42);
-            }
-            // optional grid lines
-            // ctx.strokeStyle='rgba(0,0,0,0.04)';
-            // ctx.strokeRect(px,py,tileSize,tileSize);
+            if(t==='O') drawHole(px+tileSize/2, py+tileSize/2, tileSize*0.4);
+            if(t==='G') drawSpiral(px+tileSize/2, py+tileSize/2, tileSize*0.42);
         }
     }
 
@@ -163,7 +170,7 @@ function draw(){
         ctx.stroke();
     }
 
-    // draw ball
+    // draw ball (player)
     const g = ctx.createRadialGradient(ball.x-ball.r*0.3, ball.y-ball.r*0.3, ball.r*0.1, ball.x, ball.y, ball.r);
     g.addColorStop(0,'#ffffff');
     g.addColorStop(0.2,'#dfe8f2');
@@ -172,13 +179,9 @@ function draw(){
     ctx.beginPath();
     ctx.arc(ball.x, ball.y, ball.r, 0, Math.PI*2);
     ctx.fill();
-    // highlight
     ctx.strokeStyle = 'rgba(255,255,255,0.15)';
     ctx.lineWidth = 1;
     ctx.stroke();
-
-    // debug: draw velocity vector
-    // ctx.beginPath();ctx.moveTo(ball.x,ball.y);ctx.lineTo(ball.x+ball.vx*0.06,ball.y+ball.vy*0.06);ctx.strokeStyle='red';ctx.stroke();
 
     // HUD message
     const msgEl = document.getElementById('msg');
@@ -195,7 +198,6 @@ function drawHole(cx,cy,r){
     ctx.beginPath();
     ctx.arc(cx,cy,r,0,Math.PI*2);
     ctx.fill();
-    // rim
     ctx.strokeStyle = 'rgba(255,255,255,0.03)';
     ctx.lineWidth = 2;
     ctx.stroke();
@@ -203,7 +205,6 @@ function drawHole(cx,cy,r){
 
 /* draw a spiral for goal */
 function drawSpiral(cx,cy,r){
-    // outer disk
     const grad = ctx.createLinearGradient(cx-r,cy-r,cx+r,cy+r);
     grad.addColorStop(0,'#ffeaa7');
     grad.addColorStop(1,'#ffd07a');
@@ -211,7 +212,6 @@ function drawSpiral(cx,cy,r){
     ctx.beginPath();
     ctx.arc(cx,cy,r,0,Math.PI*2);
     ctx.fill();
-    // spiral
     ctx.save();
     ctx.translate(cx,cy);
     ctx.strokeStyle = '#6b3d00';
@@ -237,12 +237,9 @@ function step(now){
     const dt = Math.min(0.03, (now - state.lastTime)/1000); // seconds, clamp
     state.lastTime = now;
 
-    // Update input from keys
+    // let movementSystem compose inputs (keyboard + tilt)
     input.ax = 0; input.ay = 0;
-    if(keys.left) input.ax -= accPower;
-    if(keys.right) input.ax += accPower;
-    if(keys.up) input.ay -= accPower;
-    if(keys.down) input.ay += accPower;
+    if(typeof movementSystem !== 'undefined') movementSystem.update(dt);
 
     // Apply physics
     ball.vx += input.ax * dt;
@@ -271,7 +268,9 @@ function step(now){
         const cx = (h.x+0.5)*tileSize, cy = (h.y+0.5)*tileSize;
         const d = Math.hypot(ball.x-cx, ball.y-cy);
         if(d < tileSize*0.35){
-            // fell into hole
+            if(typeof movementSystem !== 'undefined' && movementSystem.onEnterArea){
+                try{ movementSystem.onEnterArea('hole_'+h.x+'_'+h.y, {type:'hole', x:h.x, y:h.y}); }catch(e){console.error(e);} 
+            }
             lost();
             break;
         }
@@ -281,6 +280,9 @@ function step(now){
     if(goalPos){
         const gx = (goalPos.x+0.5)*tileSize, gy = (goalPos.y+0.5)*tileSize;
         if(Math.hypot(ball.x-gx, ball.y-gy) < tileSize*0.35){
+            if(typeof movementSystem !== 'undefined' && movementSystem.onEnterArea){
+                try{ movementSystem.onEnterArea('goal', {type:'goal', x:goalPos.x, y:goalPos.y}); }catch(e){console.error(e);} 
+            }
             win();
         }
     }
@@ -331,6 +333,10 @@ function resolveWallCollisions(){
                 // small damp
                 ball.vx *= 0.75;
                 ball.vy *= 0.75;
+                // notify movement system of collision (if present)
+                if(typeof movementSystem !== 'undefined' && movementSystem.onCollision) {
+                    try{ movementSystem.onCollision({tx:tx, ty:ty, meta:{x:tx,y:ty}}); }catch(e){console.error(e);} 
+                }
             }
         }
     }
@@ -398,14 +404,39 @@ if(window.DeviceOrientationEvent){
     window.addEventListener('deviceorientation', e=>{
         // gamma: left-right tilt [-90..90], beta: front-back [-180..180]
         if(e.gamma !== null && e.beta !== null){
+            // normalized tilt values (-1..1)
             const gx = e.gamma / 90; // -1..1
             const gy = (e.beta - 45) / 90; // offset so phone upright is neutral (optional)
-            input.ax = gx * accPower;
-            input.ay = gy * accPower;
+            gravityX = gx;
+            gravityY = gy;
         }
     }, true);
 }
 
+let gravityX = 0;
+let gravityY = 0;
+const gameEl = document.getElementById('game');
+
+if (window.DeviceOrientationEvent) {
+    window.addEventListener('deviceorientation', (ev) => {
+        if (ev.gamma != null && ev.beta != null) {
+            // map device tilt to a normalized gravity vector (-1..1)
+            gravityX = Math.max(-1, Math.min(1, -ev.gamma / 45));
+            gravityY = Math.max(-1, Math.min(1, ev.beta / 45));
+        }
+    }, true);
+} else {
+    // fallback for desktop: mouse position around the game center acts as tilt
+    window.addEventListener('mousemove', (e) => {
+        const rect = gameEl.getBoundingClientRect();
+        const cx = rect.left + rect.width / 2;
+        const cy = rect.top + rect.height / 2;
+        gravityX = (e.clientX - cx) / (rect.width / 2);
+        gravityY = (e.clientY - cy) / (rect.height / 2);
+        gravityX = Math.max(-1, Math.min(1, gravityX));
+        gravityY = Math.max(-1, Math.min(1, gravityY));
+    });
+}
 /* UI buttons */
 document.getElementById('restart').addEventListener('click', ()=>{ resetBall(); state.message=''; });
 document.getElementById('toggle-trace').addEventListener('click', ()=>{
@@ -413,107 +444,6 @@ document.getElementById('toggle-trace').addEventListener('click', ()=>{
 });
 
 /* initialize and run */
-
-/* ------------------------------
-   Small DOM motion-control demo
-   Uses deviceorientation or mouse as fallback
-   Kept separate from the canvas-based maze to avoid id collisions
------------------------------- */
-(function(){
-    const gameArea = document.getElementById('motionArea');
-    const ballEl = document.getElementById('motionBall');
-    const msgEl = document.getElementById('motionMsg');
-
-    function getBox(){ return { w: gameArea.clientWidth, h: gameArea.clientHeight }; }
-    let box = getBox();
-
-    const marble = {
-        x: box.w/2,
-        y: box.h/2,
-        vx: 0,
-        vy: 0,
-        radius: 20,
-        friction: 0.99
-    };
-
-    function applyBallSize(){
-        ballEl.style.width = (marble.radius*2) + 'px';
-        ballEl.style.height = (marble.radius*2) + 'px';
-        ballEl.style.left = (marble.x - marble.radius) + 'px';
-        ballEl.style.top = (marble.y - marble.radius) + 'px';
-    }
-    applyBallSize();
-
-    let gravityX = 0, gravityY = 0;
-
-    if (window.DeviceOrientationEvent) {
-        window.addEventListener('deviceorientation', (e) => {
-            if(e.gamma != null && e.beta != null){
-                gravityX = -e.gamma/45;
-                gravityY = e.beta/45;
-            }
-        });
-    } else {
-        window.addEventListener('mousemove', (e) => {
-            const rect = gameArea.getBoundingClientRect();
-            const cx = rect.left + rect.width / 2;
-            const cy = rect.top + rect.height / 2;
-
-            gravityX = (e.clientX - cx) / (rect.width / 2);
-            gravityY = (e.clientY - cy) / (rect.height / 2);
-        });
-    }
-
-    function updatePhysics(){
-        box = getBox();
-
-        // Apply gravity
-        marble.vx += -gravityX * 0.6;
-        marble.vy += -gravityY * 0.6;
-
-        // Apply friction
-        marble.vx *= marble.friction;
-        marble.vy *= marble.friction;
-
-        // Move marble
-        marble.x += marble.vx;
-        marble.y += marble.vy;
-
-        // Collision with walls + bounce
-        if (marble.x < marble.radius) {
-            marble.x = marble.radius;
-            marble.vx *= -0.6;
-        }
-        if (marble.x > box.w - marble.radius) {
-            marble.x = box.w - marble.radius;
-            marble.vx *= -0.6;
-        }
-        if (marble.y < marble.radius) {
-            marble.y = marble.radius;
-            marble.vy *= -0.6;
-        }
-        if (marble.y > box.h - marble.radius) {
-            marble.y = box.h - marble.radius;
-            marble.vy *= -0.6;
-        }
-
-        // Update visual position
-        ballEl.style.left = (marble.x - marble.radius) + "px";
-        ballEl.style.top = (marble.y - marble.radius) + "px";
-
-        requestAnimationFrame(updatePhysics);
-    }
-
-    window.addEventListener('resize', ()=>{
-        box = getBox();
-        marble.x = Math.max(marble.radius, Math.min(marble.x, box.w - marble.radius));
-        marble.y = Math.max(marble.radius, Math.min(marble.y, box.h - marble.radius));
-        applyBallSize();
-    });
-
-    updatePhysics();
-})();
-
 adjustCanvas();
 resetBall();
 requestAnimationFrame(step);
