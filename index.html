@@ -1,61 +1,48 @@
 <!doctype html>
 <html lang="en">
 <head>
-    <meta charset="utf-8" />
-    <title>Marble Maze</title>
-    <meta name="viewport" content="width=device-width,initial-scale=1" />
-    <style>
-        html,body{height:100%;margin:0;background:#efe7d6;display:flex;align-items:center;justify-content:center;font-family:system-ui,Segoe UI,Roboto}
-        #game{position:relative}
-        canvas{background:linear-gradient(#c7a77a,#b88950);display:block;border:6px solid #5b3a21;box-shadow:0 8px 24px rgba(0,0,0,.35)}
-        #ui{position:absolute;left:8px;top:8px;color:#fff;display:flex;gap:8px}
-        button{background:#333;color:#fff;border:none;padding:6px 10px;border-radius:6px;cursor:pointer}
-        #msg{position:absolute;right:8px;top:8px;background:rgba(0,0,0,.6);color:#fff;padding:8px 12px;border-radius:6px}
-        #legend{position:absolute;left:8px;bottom:8px;background:rgba(0,0,0,.6);color:#fff;padding:6px 10px;border-radius:6px;font-size:13px}
-    </style>
+<meta charset="utf-8" />
+<title>Marble Maze</title>
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<style>
+html,body{height:100%;margin:0;background:#efe7d6;display:flex;align-items:center;justify-content:center;font-family:system-ui,Segoe UI,Roboto}
+#game{position:relative}
+canvas{background:linear-gradient(#c7a77a,#b88950);display:block;border:6px solid #5b3a21;box-shadow:0 8px 24px rgba(0,0,0,.35)}
+#ui{position:absolute;left:8px;top:8px;color:#fff;display:flex;gap:8px}
+button{background:#333;color:#fff;border:none;padding:6px 10px;border-radius:6px;cursor:pointer}
+#msg{position:absolute;right:8px;top:8px;background:rgba(0,0,0,.6);color:#fff;padding:8px 12px;border-radius:6px}
+#legend{position:absolute;left:8px;bottom:8px;background:rgba(0,0,0,.6);color:#fff;padding:6px 10px;border-radius:6px;font-size:13px}
+</style>
 </head>
 <body>
-    <div id="game">
-        <canvas id="c" width="720" height="720"></canvas>
-        <div id="ui">
-            <button id="restart">Restart</button>
-            <button id="toggle-trace">Toggle Trace</button>
-        </div>
-        <div id="msg">Use arrow keys, drag, or tilt. Reach the spiral. Avoid black holes.</div>
-        <div id="legend">Holes = black • Goal = spiral</div>
+<div id="game">
+    <canvas id="c" width="720" height="720"></canvas>
+    <div id="ui">
+        <button id="restart">Restart</button>
+        <button id="toggle-trace">Toggle Trace</button>
     </div>
-
-    <!-- Motion permission prompt (shown on iOS where permission is required) -->
-    <div id="motionPermission" style="display:none;position:fixed;inset:0;backdrop-filter:blur(4px);align-items:center;justify-content:center;z-index:9999;">
-        <div style="background:#fff;padding:18px 20px;border-radius:10px;box-shadow:0 10px 30px rgba(0,0,0,.25);max-width:92%;margin:auto;text-align:center;color:#222">
-            <div style="font-weight:600;margin-bottom:8px">Enable motion controls</div>
-            <div style="font-size:14px;color:#555;margin-bottom:12px">This site uses device motion to let you tilt your device to move the marble. Please allow motion access.</div>
-            <div style="display:flex;gap:8px;justify-content:center">
-                <button id="enable-motion" style="padding:8px 12px;border-radius:6px;border:none;background:#2b8cff;color:#fff;cursor:pointer">Enable</button>
-                <button id="dismiss-motion" style="padding:8px 12px;border-radius:6px;border:1px solid #ccc;background:#fff;color:#333;cursor:pointer">Not now</button>
-            </div>
-        </div>
-    </div>
+    <div id="msg">Use arrow keys, drag, or tilt. Reach the spiral. Avoid black holes.</div>
+    <div id="legend">Holes = black • Goal = spiral</div>
+</div>
 
 <script>
-/*
-    Marble Maze
-    Single-file HTML game. Place in your .html file and open in browser.
-*/
+/* ============================================================
+   MARBLE MAZE – COMPLETE GAME WITH HYBRID MOVEMENT CONTROL
+   ============================================================ */
 
-/* Maze definition - array of strings (W=wall, .=path, O=hole, S=start, G=goal) */
+/* ---------- MAZE DEFINITION ---------- */
 const MAZE = [
-"W W W W W W W W W W",
-"W . . . . W . . . W",
-"W . . O . W . . . W",
-"W . W W . W . W . W",
-"W . W G . . . W . W",
-"W . W W W W . W . W",
-"W . . . . W . W . W",
-"W W W W . W . W . W",
-"W S . . . . . O . W",
-"W W W W W W . . . W",
-"W W W W W W W W W W"
+ "W W W W W W W W W W",
+ "W . . . . W . . . W",
+ "W . . O . W . . . W",
+ "W . W W . W . W . W",
+ "W . W G . . . W . W",
+ "W . W W W W . W . W",
+ "W . . . . W . W . W",
+ "W W W W . W . W . W",
+ "W S . . . . . O . W",
+ "W W W W W W . . . W",
+ "W W W W W W W W W W"
 ].map(r => r.split(' '));
 
 const canvas = document.getElementById('c');
@@ -66,430 +53,369 @@ let cols = MAZE[0].length;
 let tileSize = Math.min(canvas.width/cols, canvas.height/rows);
 let radius = tileSize * 0.35;
 
-let startPos = findTile('S');
-let goalPos = findTile('G');
-let holeTiles = findAllTiles('O');
-
 function findTile(ch){
-    for(let y=0;y<rows;y++){
-        for(let x=0;x<cols;x++){
-            if(MAZE[y][x] === ch) return {x,y};
-        }
-    }
-    return null;
+    for(let y=0;y<rows;y++)
+        for(let x=0;x<cols;x++)
+            if(MAZE[y][x]===ch) return {x,y};
 }
 function findAllTiles(ch){
-    const res=[];
-    for(let y=0;y<rows;y++) for(let x=0;x<cols;x++) if(MAZE[y][x]===ch) res.push({x,y});
-    return res;
+    const out=[];
+    for(let y=0;y<rows;y++)
+        for(let x=0;x<cols;x++)
+            if(MAZE[y][x]===ch) out.push({x,y});
+    return out;
 }
 
-/* Ball state */
+const startPos = findTile('S');
+const goalPos = findTile('G');
+const holeTiles = findAllTiles('O');
+
+/* ---------- BALL STATE ---------- */
 let ball = {
-    x: (startPos.x+0.5)*tileSize,
-    y: (startPos.y+0.5)*tileSize,
-    vx: 0,
-    vy: 0,
-    r: radius
+    x:(startPos.x+0.5)*tileSize,
+    y:(startPos.y+0.5)*tileSize,
+    vx:0,
+    vy:0,
+    r:radius,
 };
 
 const state = {
-    running: true,
-    trace: false,
-    message: '',
-    lastTime: null
+    running:true,
+    trace:false,
+    message:'',
+    path:[],
+    lastTime:null
 };
 
-/* Physics parameters */
-const maxSpeed = 800; // px/s
-const accPower = 1800; // px/s^2 when input applied
-const friction = 0.98; // per frame damping
+/* ---------- PHYSICS PARAMETERS ---------- */
+const friction = 0.98;
+const maxSpeed = 800;
+const accPower = 1800;
 
-/* Input state */
+/* ---------- UNIVERSAL INPUT SYSTEM ---------- */
 let input = {ax:0, ay:0};
-const keys = {left:false,right:false,up:false,down:false};
-const pointer = {down:false,startX:0,startY:0};
+const keys = {left:false, right:false, up:false, down:false};
+const pointer = {down:false, startX:0, startY:0};
 
-/* MovementSystem controller: composes keyboard + tilt and writes into input.ax/ay */
-class MovementSystem {
-    constructor(){
-        this.accPower = accPower; // reuse maze constant
-        this.gravityThreshold = 0.02;
-        this.onEnterArea = (id, meta) => {};
-        this.onCollision = (obs) => {};
-    }
-    update(dt){
-        let inX = 0, inY = 0;
-        if(keys.left) inX -= 1; if(keys.right) inX += 1;
-        if(keys.up) inY -= 1; if(keys.down) inY += 1;
-        if(typeof gravityX !== 'undefined' && Math.abs(gravityX) > this.gravityThreshold) inX += gravityX;
-        if(typeof gravityY !== 'undefined' && Math.abs(gravityY) > this.gravityThreshold) inY += gravityY;
-        const len = Math.hypot(inX, inY);
-        let nx = 0, ny = 0;
-        if(len > 1){ nx = inX/len; ny = inY/len; } else { nx = inX; ny = inY; }
-        input.ax = nx * this.accPower;
-        input.ay = ny * this.accPower;
-    }
+/* ============================================================
+   NEW UNIVERSAL MOVEMENT CONTROL SYSTEM
+   - Device tilt → gravity vector
+   - Mouse fallback → gravity toward center
+   - Keyboard → direct acceleration
+   - Pointer drag → virtual tilt
+   ============================================================ */
+
+let gravityX = 0;
+let gravityY = 0;
+
+/* ----- Device Tilt ----- */
+if (window.DeviceOrientationEvent) {
+    window.addEventListener("deviceorientation", e => {
+        if (e.gamma == null || e.beta == null) return;
+        gravityX = -e.gamma / 45;  // left/right tilt
+        gravityY =  e.beta  / 45;  // forward/back
+    });
+} else {
+    /* ----- Mouse fallback: mouse position sets gravity direction ----- */
+    window.addEventListener("mousemove", e => {
+        const rect = canvas.getBoundingClientRect();
+        const cx = rect.left + rect.width/2;
+        const cy = rect.top + rect.height/2;
+        gravityX = (e.clientX - cx) / (rect.width/2);
+        gravityY = (e.clientY - cy) / (rect.height/2);
+    });
 }
 
-// global controller instance
-let movementSystem = new MovementSystem();
+/* ============================================================
+   DRAWING AND MAZE RENDERING
+   ============================================================ */
 
-/* Resize handling for crisp tiles (optional) */
-function adjustCanvas(){
-    const sz = Math.min(window.innerWidth-40, window.innerHeight-40, 720);
-    canvas.width = sz;
-    canvas.height = sz;
-    tileSize = Math.min(canvas.width/cols, canvas.height/rows);
-    radius = tileSize*0.35;
-    ball.r = radius;
-    // reposition to tile centers according to current logical tile indices
-    // if using restart: fine
-}
-
-/* Draw functions */
 function draw(){
     ctx.clearRect(0,0,canvas.width,canvas.height);
-    // draw tiles
+
     for(let y=0;y<rows;y++){
         for(let x=0;x<cols;x++){
-            const px = x*tileSize, py = y*tileSize;
-            const t = MAZE[y][x];
+            const px=x*tileSize, py=y*tileSize;
+            const t=MAZE[y][x];
+
             if(t==='W'){
-                // wall - wood border darker
-                ctx.fillStyle = '#6b4a2b';
+                ctx.fillStyle='#6b4a2b';
                 ctx.fillRect(px,py,tileSize,tileSize);
-                // inner lighter wood
-                ctx.fillStyle = '#8f6237';
+                ctx.fillStyle='#8f6237';
                 ctx.fillRect(px+2,py+2,tileSize-4,tileSize-4);
             } else {
-                // path: slightly textured
-                ctx.fillStyle = '#d9c7a6';
+                ctx.fillStyle='#d9c7a6';
                 ctx.fillRect(px,py,tileSize,tileSize);
             }
+
             if(t==='O') drawHole(px+tileSize/2, py+tileSize/2, tileSize*0.4);
             if(t==='G') drawSpiral(px+tileSize/2, py+tileSize/2, tileSize*0.42);
         }
     }
 
-    // optional trace
-    if(state.trace && state.path && state.path.length>1){
+    if(state.trace && state.path.length>1){
         ctx.beginPath();
-        ctx.strokeStyle = 'rgba(0,0,0,0.2)';
-        ctx.lineWidth = 2;
-        ctx.moveTo(state.path[0].x, state.path[0].y);
+        ctx.strokeStyle='rgba(0,0,0,0.2)';
+        ctx.lineWidth=2;
+        ctx.moveTo(state.path[0].x,state.path[0].y);
         for(let p of state.path) ctx.lineTo(p.x,p.y);
         ctx.stroke();
     }
 
-    // draw ball (player)
-    const g = ctx.createRadialGradient(ball.x-ball.r*0.3, ball.y-ball.r*0.3, ball.r*0.1, ball.x, ball.y, ball.r);
-    g.addColorStop(0,'#ffffff');
+    drawBall();
+
+    document.getElementById("msg").textContent =
+        state.message || "Use arrow keys, drag, or tilt. Reach the spiral. Avoid black holes.";
+}
+
+function drawBall(){
+    const g=ctx.createRadialGradient(
+        ball.x-ball.r*0.3,
+        ball.y-ball.r*0.3,
+        ball.r*0.1,
+        ball.x, ball.y, ball.r
+    );
+    g.addColorStop(0,'#fff');
     g.addColorStop(0.2,'#dfe8f2');
     g.addColorStop(1,'#7a7f85');
-    ctx.fillStyle = g;
-    ctx.beginPath();
-    ctx.arc(ball.x, ball.y, ball.r, 0, Math.PI*2);
-    ctx.fill();
-    ctx.strokeStyle = 'rgba(255,255,255,0.15)';
-    ctx.lineWidth = 1;
-    ctx.stroke();
 
-    // HUD message
-    const msgEl = document.getElementById('msg');
-    if(state.message) msgEl.textContent = state.message;
-    else msgEl.textContent = "Use arrow keys, drag, or tilt. Reach the spiral. Avoid black holes.";
+    ctx.fillStyle=g;
+    ctx.beginPath();
+    ctx.arc(ball.x,ball.y,ball.r,0,Math.PI*2);
+    ctx.fill();
+
+    ctx.strokeStyle='rgba(255,255,255,0.15)';
+    ctx.lineWidth=1;
+    ctx.stroke();
 }
 
-/* draw black hole with subtle depth */
 function drawHole(cx,cy,r){
-    const g = ctx.createRadialGradient(cx-r*0.2,cy-r*0.2,1,cx,cy,r);
+    const g=ctx.createRadialGradient(cx-r*0.2,cy-r*0.2,1,cx,cy,r);
     g.addColorStop(0,'#111');
     g.addColorStop(1,'#000');
-    ctx.fillStyle = g;
+    ctx.fillStyle=g;
     ctx.beginPath();
     ctx.arc(cx,cy,r,0,Math.PI*2);
     ctx.fill();
-    ctx.strokeStyle = 'rgba(255,255,255,0.03)';
-    ctx.lineWidth = 2;
-    ctx.stroke();
 }
 
-/* draw a spiral for goal */
 function drawSpiral(cx,cy,r){
-    const grad = ctx.createLinearGradient(cx-r,cy-r,cx+r,cy+r);
+    const grad=ctx.createLinearGradient(cx-r,cy-r,cx+r,cy+r);
     grad.addColorStop(0,'#ffeaa7');
     grad.addColorStop(1,'#ffd07a');
-    ctx.fillStyle = grad;
+    ctx.fillStyle=grad;
     ctx.beginPath();
     ctx.arc(cx,cy,r,0,Math.PI*2);
     ctx.fill();
+
     ctx.save();
     ctx.translate(cx,cy);
-    ctx.strokeStyle = '#6b3d00';
-    ctx.lineWidth = Math.max(2, r*0.08);
+    ctx.strokeStyle='#6b3d00';
+    ctx.lineWidth=Math.max(2,r*0.08);
     ctx.beginPath();
-    let turns = 5;
-    let segments = 120;
-    for(let i=0;i<segments;i++){
-        const t = i/segments;
-        const a = t*turns*Math.PI*2 - Math.PI/2;
-        const rad = r*(1 - t*0.9);
-        const x = Math.cos(a)*rad;
-        const y = Math.sin(a)*rad;
-        if(i===0) ctx.moveTo(x,y); else ctx.lineTo(x,y);
+    for(let i=0;i<120;i++){
+        const t=i/120;
+        const a=t*5*Math.PI*2 - Math.PI/2;
+        const rad=r*(1 - t*0.9);
+        const x=Math.cos(a)*rad;
+        const y=Math.sin(a)*rad;
+        if(i==0) ctx.moveTo(x,y);
+        else ctx.lineTo(x,y);
     }
     ctx.stroke();
     ctx.restore();
 }
 
-/* Game loop */
-function step(now){
-    if(!state.lastTime) state.lastTime = now;
-    const dt = Math.min(0.03, (now - state.lastTime)/1000); // seconds, clamp
-    state.lastTime = now;
+/* ============================================================
+   PHYSICS AND MOVEMENT
+   ============================================================ */
 
-    // let movementSystem compose inputs (keyboard + tilt)
-    input.ax = 0; input.ay = 0;
-    if(typeof movementSystem !== 'undefined') movementSystem.update(dt);
+function physics(dt){
+    /* ----- Base gravity from tilt or mouse ----- */
+    let ax = -gravityX * accPower;
+    let ay = -gravityY * accPower;
 
-    // Apply physics
-    ball.vx += input.ax * dt;
-    ball.vy += input.ay * dt;
+    /* ----- Keyboard adds to acceleration ----- */
+    if(keys.left)  ax -= accPower;
+    if(keys.right) ax += accPower;
+    if(keys.up)    ay -= accPower;
+    if(keys.down)  ay += accPower;
 
-    // clamp speed
-    const speed = Math.hypot(ball.vx, ball.vy);
-    if(speed > maxSpeed){
-        const s = maxSpeed / speed;
-        ball.vx *= s; ball.vy *= s;
+    /* ----- Pointer drag tilt ----- */
+    ax += input.ax;
+    ay += input.ay;
+
+    /* ----- Apply acceleration ----- */
+    ball.vx += ax * dt;
+    ball.vy += ay * dt;
+
+    /* Clamp speed */
+    const s = Math.hypot(ball.vx, ball.vy);
+    if(s > maxSpeed){
+        const k = maxSpeed/s;
+        ball.vx *= k;
+        ball.vy *= k;
     }
 
-    // apply friction/damping
+    /* Friction */
     ball.vx *= Math.pow(friction, dt*60);
     ball.vy *= Math.pow(friction, dt*60);
 
-    // integrate
+    /* Move ball */
     ball.x += ball.vx * dt;
     ball.y += ball.vy * dt;
 
-    // collision with walls (AABB per tile)
+    /* Wall collisions */
     resolveWallCollisions();
 
-    // check holes
-    for(let h of holeTiles){
-        const cx = (h.x+0.5)*tileSize, cy = (h.y+0.5)*tileSize;
-        const d = Math.hypot(ball.x-cx, ball.y-cy);
-        if(d < tileSize*0.35){
-            if(typeof movementSystem !== 'undefined' && movementSystem.onEnterArea){
-                try{ movementSystem.onEnterArea('hole_'+h.x+'_'+h.y, {type:'hole', x:h.x, y:h.y}); }catch(e){console.error(e);} 
-            }
-            lost();
-            break;
-        }
+    /* Holes */
+    for(const h of holeTiles){
+        const cx=(h.x+0.5)*tileSize, cy=(h.y+0.5)*tileSize;
+        if(Math.hypot(ball.x-cx,ball.y-cy)<tileSize*0.35)
+            return lost();
     }
 
-    // check goal
-    if(goalPos){
-        const gx = (goalPos.x+0.5)*tileSize, gy = (goalPos.y+0.5)*tileSize;
-        if(Math.hypot(ball.x-gx, ball.y-gy) < tileSize*0.35){
-            if(typeof movementSystem !== 'undefined' && movementSystem.onEnterArea){
-                try{ movementSystem.onEnterArea('goal', {type:'goal', x:goalPos.x, y:goalPos.y}); }catch(e){console.error(e);} 
-            }
-            win();
-        }
-    }
+    /* Goal */
+    const gx=(goalPos.x+0.5)*tileSize, gy=(goalPos.y+0.5)*tileSize;
+    if(Math.hypot(ball.x-gx,ball.y-gy)<tileSize*0.35)
+        return win();
 
-    // record trace
+    /* Trace */
     if(state.trace){
-        state.path = state.path || [];
-        if(state.path.length === 0 || Math.hypot(state.path[state.path.length-1].x - ball.x, state.path[state.path.length-1].y - ball.y) > 6)
+        if(state.path.length===0 ||
+            Math.hypot(ball.x-state.path.at(-1).x,ball.y-state.path.at(-1).y)>6)
             state.path.push({x:ball.x,y:ball.y});
-        if(state.path.length > 800) state.path.shift();
-    } else {
-        state.path = [];
+        if(state.path.length>800) state.path.shift();
     }
+}
 
+/* ---------- Wall Collision ---------- */
+function resolveWallCollisions(){
+    const minX=Math.floor((ball.x-ball.r)/tileSize);
+    const maxX=Math.floor((ball.x+ball.r)/tileSize);
+    const minY=Math.floor((ball.y-ball.r)/tileSize);
+    const maxY=Math.floor((ball.y+ball.r)/tileSize);
+
+    for(let ty=minY;ty<=maxY;ty++){
+        for(let tx=minX;tx<=maxX;tx++){
+            if(ty<0||ty>=rows||tx<0||tx>=cols) continue;
+            if(MAZE[ty][tx]!=='W') continue;
+
+            const rx=tx*tileSize, ry=ty*tileSize;
+
+            const closestX=Math.max(rx, Math.min(ball.x, rx+tileSize));
+            const closestY=Math.max(ry, Math.min(ball.y, ry+tileSize));
+
+            const dx=ball.x-closestX;
+            const dy=ball.y-closestY;
+            const dist2=dx*dx+dy*dy;
+
+            if(dist2 < ball.r*ball.r){
+                const dist=Math.sqrt(dist2)||0.001;
+                const overlap=ball.r-dist;
+
+                const nx=dx/dist, ny=dy/dist;
+
+                ball.x += nx*overlap;
+                ball.y += ny*overlap;
+
+                const vdot = ball.vx*nx + ball.vy*ny;
+                ball.vx -= 1.6*vdot*nx;
+                ball.vy -= 1.6*vdot*ny;
+
+                ball.vx *= 0.75;
+                ball.vy *= 0.75;
+            }
+        }
+    }
+}
+
+/* ============================================================
+   GAME STATE HANDLING
+   ============================================================ */
+function resetBall(){
+    ball.x=(startPos.x+0.5)*tileSize;
+    ball.y=(startPos.y+0.5)*tileSize;
+    ball.vx=0;
+    ball.vy=0;
+    state.message='';
+    state.path=[];
+}
+function lost(){
+    state.message='Fell into a hole! Restarting…';
+    setTimeout(resetBall,800);
+}
+function win(){
+    state.message='You reached the spiral! Congratulations.';
+    ball.vx=ball.vy=0;
+    setTimeout(resetBall,1500);
+}
+
+/* ============================================================
+   INPUT EVENTS
+   ============================================================ */
+
+window.addEventListener('keydown', e=>{
+    if(e.key==="ArrowLeft"||e.key==="a"){ keys.left=true; e.preventDefault(); }
+    if(e.key==="ArrowRight"||e.key==="d"){ keys.right=true; e.preventDefault(); }
+    if(e.key==="ArrowUp"||e.key==="w"){ keys.up=true; e.preventDefault(); }
+    if(e.key==="ArrowDown"||e.key==="s"){ keys.down=true; e.preventDefault(); }
+});
+window.addEventListener('keyup', e=>{
+    if(e.key==="ArrowLeft"||e.key==="a") keys.left=false;
+    if(e.key==="ArrowRight"||e.key==="d") keys.right=false;
+    if(e.key==="ArrowUp"||e.key==="w") keys.up=false;
+    if(e.key==="ArrowDown"||e.key==="s") keys.down=false;
+});
+
+/* ----- Pointer drag tilt ----- */
+canvas.addEventListener('pointerdown', e=>{
+    pointer.down=true;
+    pointer.startX=e.clientX;
+    pointer.startY=e.clientY;
+    canvas.setPointerCapture(e.pointerId);
+});
+canvas.addEventListener('pointermove', e=>{
+    if(!pointer.down) return;
+    input.ax=(e.clientX-pointer.startX)*12;
+    input.ay=(e.clientY-pointer.startY)*12;
+});
+canvas.addEventListener('pointerup', e=>{
+    pointer.down=false;
+    input.ax=input.ay=0;
+    canvas.releasePointerCapture?.(e.pointerId);
+});
+
+/* ============================================================
+   LOOP
+   ============================================================ */
+function step(now){
+    if(!state.lastTime) state.lastTime=now;
+    const dt=Math.min(0.03,(now-state.lastTime)/1000);
+    state.lastTime=now;
+
+    physics(dt);
     draw();
+
     requestAnimationFrame(step);
 }
 
-/* Basic wall collision handling: check nearby tiles and resolve penetration with AABB */
-function resolveWallCollisions(){
-    const minX = Math.floor((ball.x - ball.r) / tileSize);
-    const maxX = Math.floor((ball.x + ball.r) / tileSize);
-    const minY = Math.floor((ball.y - ball.r) / tileSize);
-    const maxY = Math.floor((ball.y + ball.r) / tileSize);
+/* UI */
+document.getElementById('restart').onclick=resetBall;
+document.getElementById('toggle-trace').onclick=()=>state.trace=!state.trace;
 
-    for(let ty=minY; ty<=maxY; ty++){
-        for(let tx=minX; tx<=maxX; tx++){
-            if(ty<0||ty>=rows||tx<0||tx>=cols) continue;
-            if(MAZE[ty][tx] !== 'W') continue;
-            const rx = tx*tileSize, ry = ty*tileSize;
-            // find closest point on rect to ball center
-            const closestX = Math.max(rx, Math.min(ball.x, rx+tileSize));
-            const closestY = Math.max(ry, Math.min(ball.y, ry+tileSize));
-            const dx = ball.x - closestX;
-            const dy = ball.y - closestY;
-            const dist2 = dx*dx + dy*dy;
-            if(dist2 < ball.r*ball.r){
-                const dist = Math.sqrt(dist2) || 0.001;
-                const overlap = ball.r - dist;
-                // push ball out
-                ball.x += (dx/dist) * overlap;
-                ball.y += (dy/dist) * overlap;
-                // reflect velocity component
-                const nx = dx/dist, ny = dy/dist;
-                const vDotN = ball.vx*nx + ball.vy*ny;
-                ball.vx -= 1.6 * vDotN * nx; // bounce factor
-                ball.vy -= 1.6 * vDotN * ny;
-                // small damp
-                ball.vx *= 0.75;
-                ball.vy *= 0.75;
-                // notify movement system of collision (if present)
-                if(typeof movementSystem !== 'undefined' && movementSystem.onCollision) {
-                    try{ movementSystem.onCollision({tx:tx, ty:ty, meta:{x:tx,y:ty}}); }catch(e){console.error(e);} 
-                }
-            }
-        }
-    }
+/* Resize for crisp tiles */
+function adjustCanvas(){
+    const sz=Math.min(window.innerWidth-40,window.innerHeight-40,720);
+    canvas.width=sz;
+    canvas.height=sz;
+    tileSize=Math.min(canvas.width/cols,canvas.height/rows);
+    radius=tileSize*0.35;
+    ball.r=radius;
 }
+window.addEventListener('resize', adjustCanvas);
 
-/* Win / Lose handlers */
-function resetBall(){
-    ball.x = (startPos.x+0.5)*tileSize;
-    ball.y = (startPos.y+0.5)*tileSize;
-    ball.vx = 0; ball.vy = 0;
-    state.message = '';
-    state.path = [];
-}
-
-function lost(){
-    state.message = 'Fell into a hole! Restarting…';
-    setTimeout(()=>{ resetBall(); }, 800);
-}
-
-function win(){
-    state.message = 'You reached the spiral! Congratulations.';
-    // stop movement
-    ball.vx = ball.vy = 0;
-    // optionally respawn after a pause
-    setTimeout(()=>{ resetBall(); }, 1500);
-}
-
-/* Input handlers */
-window.addEventListener('keydown', e=>{
-    if(e.key === 'ArrowLeft' || e.key === 'a'){ keys.left = true; e.preventDefault(); }
-    if(e.key === 'ArrowRight' || e.key === 'd'){ keys.right = true; e.preventDefault(); }
-    if(e.key === 'ArrowUp' || e.key === 'w'){ keys.up = true; e.preventDefault(); }
-    if(e.key === 'ArrowDown' || e.key === 's'){ keys.down = true; e.preventDefault(); }
-});
-window.addEventListener('keyup', e=>{
-    if(e.key === 'ArrowLeft' || e.key === 'a'){ keys.left = false; }
-    if(e.key === 'ArrowRight' || e.key === 'd'){ keys.right = false; }
-    if(e.key === 'ArrowUp' || e.key === 'w'){ keys.up = false; }
-    if(e.key === 'ArrowDown' || e.key === 's'){ keys.down = false; }
-});
-
-/* Pointer drag to simulate tilt: drag vector gives acceleration */
-canvas.addEventListener('pointerdown', (e)=>{
-    pointer.down = true;
-    pointer.startX = e.clientX;
-    pointer.startY = e.clientY;
-    canvas.setPointerCapture(e.pointerId);
-});
-canvas.addEventListener('pointermove', (e)=>{
-    if(!pointer.down) return;
-    const dx = e.clientX - pointer.startX;
-    const dy = e.clientY - pointer.startY;
-    // small sensitivity scaling
-    input.ax = dx * 12;
-    input.ay = dy * 12;
-});
-canvas.addEventListener('pointerup', (e)=>{
-    pointer.down = false;
-    input.ax = 0; input.ay = 0;
-    canvas.releasePointerCapture && canvas.releasePointerCapture(e.pointerId);
-});
-
-/* Device orientation (tilt) support - single, permission-aware initializer */
-let gravityX = 0;
-let gravityY = 0;
-const gameEl = document.getElementById('game');
-
-function enableDeviceOrientation(){
-    // Single listener: normalize to [-1..1] and store in gravityX/gravityY
-    window.addEventListener('deviceorientation', (ev) => {
-        if (ev.gamma != null && ev.beta != null) {
-            // map device tilt to a normalized gravity vector (-1..1)
-            gravityX = Math.max(-1, Math.min(1, -ev.gamma / 45));
-            gravityY = Math.max(-1, Math.min(1, (ev.beta - 45) / 45));
-        }
-    }, true);
-}
-
-// mouse fallback: emulate tilt by cursor around game center
-function enableMouseTiltFallback(){
-    window.addEventListener('mousemove', (e) => {
-        const rect = gameEl.getBoundingClientRect();
-        const cx = rect.left + rect.width / 2;
-        const cy = rect.top + rect.height / 2;
-        gravityX = (e.clientX - cx) / (rect.width / 2);
-        gravityY = (e.clientY - cy) / (rect.height / 2);
-        gravityX = Math.max(-1, Math.min(1, gravityX));
-        gravityY = Math.max(-1, Math.min(1, gravityY));
-    });
-}
-
-function showMotionPrompt(){
-    const el = document.getElementById('motionPermission');
-    if(el) el.style.display = 'flex';
-}
-function hideMotionPrompt(){
-    const el = document.getElementById('motionPermission');
-    if(el) el.style.display = 'none';
-}
-
-function requestMotionPermission(){
-    // iOS Safari requires a user gesture to request permission
-    if (typeof DeviceOrientationEvent !== 'undefined' && typeof DeviceOrientationEvent.requestPermission === 'function'){
-        showMotionPrompt();
-        document.getElementById('enable-motion').addEventListener('click', ()=>{
-            DeviceOrientationEvent.requestPermission().then(resp=>{
-                hideMotionPrompt();
-                if(resp === 'granted'){
-                    enableDeviceOrientation();
-                } else {
-                    // permission denied – fall back to mouse
-                    enableMouseTiltFallback();
-                }
-            }).catch(err=>{
-                console.error('Permission request error', err);
-                hideMotionPrompt();
-                enableMouseTiltFallback();
-            });
-        });
-        document.getElementById('dismiss-motion').addEventListener('click', ()=>{
-            hideMotionPrompt();
-            enableMouseTiltFallback();
-        });
-    } else if (window.DeviceOrientationEvent){
-        // no explicit permission API — just enable
-        enableDeviceOrientation();
-    } else {
-        // no deviceorientation – use mouse fallback
-        enableMouseTiltFallback();
-    }
-}
-
-// initialize motion input handling
-requestMotionPermission();
-/* UI buttons */
-document.getElementById('restart').addEventListener('click', ()=>{ resetBall(); state.message=''; });
-document.getElementById('toggle-trace').addEventListener('click', ()=>{
-    state.trace = !state.trace;
-});
-
-/* initialize and run */
+/* START GAME */
 adjustCanvas();
 resetBall();
 requestAnimationFrame(step);
