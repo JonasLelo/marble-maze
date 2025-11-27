@@ -27,7 +27,7 @@ button{background:#333;color:#fff;border:none;padding:6px 10px;border-radius:6px
 
 <script>
 /* ============================================================
-   MARBLE MAZE – COMPLETE GAME WITH HYBRID MOVEMENT CONTROL
+   MARBLE MAZE – COMPLETE GAME WITH CORRECT AXIS SWAP
    ============================================================ */
 
 /* ---------- MAZE DEFINITION ---------- */
@@ -92,31 +92,29 @@ const friction = 0.98;
 const maxSpeed = 800;
 const accPower = 1800;
 
-/* ---------- UNIVERSAL INPUT SYSTEM ---------- */
+/* ---------- INPUT ---------- */
 let input = {ax:0, ay:0};
 const keys = {left:false, right:false, up:false, down:false};
 const pointer = {down:false, startX:0, startY:0};
 
 /* ============================================================
-   NEW UNIVERSAL MOVEMENT CONTROL SYSTEM
-   - Device tilt → gravity vector
-   - Mouse fallback → gravity toward center
-   - Keyboard → direct acceleration
-   - Pointer drag → virtual tilt
+   MOVEMENT CONTROL (AXES SWAPPED)
    ============================================================ */
 
 let gravityX = 0;
 let gravityY = 0;
 
-/* ----- Device Tilt ----- */
+/* ----- Device Tilt (gamma & beta swapped!) ----- */
 if (window.DeviceOrientationEvent) {
     window.addEventListener("deviceorientation", e => {
         if (e.gamma == null || e.beta == null) return;
-        gravityX = -e.gamma / 45;  // left/right tilt
-        gravityY =  e.beta  / 45;  // forward/back
+
+        /* SWAPPED AXES */
+        gravityX = -e.beta / 45;   // previously gamma
+        gravityY =  e.gamma / 45;  // previously beta
     });
 } else {
-    /* ----- Mouse fallback: mouse position sets gravity direction ----- */
+    /* Mouse fallback */
     window.addEventListener("mousemove", e => {
         const rect = canvas.getBoundingClientRect();
         const cx = rect.left + rect.width/2;
@@ -127,7 +125,7 @@ if (window.DeviceOrientationEvent) {
 }
 
 /* ============================================================
-   DRAWING AND MAZE RENDERING
+   DRAWING – unchanged
    ============================================================ */
 
 function draw(){
@@ -227,29 +225,24 @@ function drawSpiral(cx,cy,r){
 }
 
 /* ============================================================
-   PHYSICS AND MOVEMENT
+   PHYSICS (unchanged)
    ============================================================ */
 
 function physics(dt){
-    /* ----- Base gravity from tilt or mouse ----- */
     let ax = -gravityX * accPower;
     let ay = -gravityY * accPower;
 
-    /* ----- Keyboard adds to acceleration ----- */
     if(keys.left)  ax -= accPower;
     if(keys.right) ax += accPower;
     if(keys.up)    ay -= accPower;
     if(keys.down)  ay += accPower;
 
-    /* ----- Pointer drag tilt ----- */
     ax += input.ax;
     ay += input.ay;
 
-    /* ----- Apply acceleration ----- */
     ball.vx += ax * dt;
     ball.vy += ay * dt;
 
-    /* Clamp speed */
     const s = Math.hypot(ball.vx, ball.vy);
     if(s > maxSpeed){
         const k = maxSpeed/s;
@@ -257,30 +250,24 @@ function physics(dt){
         ball.vy *= k;
     }
 
-    /* Friction */
     ball.vx *= Math.pow(friction, dt*60);
     ball.vy *= Math.pow(friction, dt*60);
 
-    /* Move ball */
     ball.x += ball.vx * dt;
     ball.y += ball.vy * dt;
 
-    /* Wall collisions */
     resolveWallCollisions();
 
-    /* Holes */
     for(const h of holeTiles){
         const cx=(h.x+0.5)*tileSize, cy=(h.y+0.5)*tileSize;
         if(Math.hypot(ball.x-cx,ball.y-cy)<tileSize*0.35)
             return lost();
     }
 
-    /* Goal */
     const gx=(goalPos.x+0.5)*tileSize, gy=(goalPos.y+0.5)*tileSize;
     if(Math.hypot(ball.x-gx,ball.y-gy)<tileSize*0.35)
         return win();
 
-    /* Trace */
     if(state.trace){
         if(state.path.length===0 ||
             Math.hypot(ball.x-state.path.at(-1).x,ball.y-state.path.at(-1).y)>6)
@@ -289,7 +276,7 @@ function physics(dt){
     }
 }
 
-/* ---------- Wall Collision ---------- */
+/* ---------- Wall Collisions ---------- */
 function resolveWallCollisions(){
     const minX=Math.floor((ball.x-ball.r)/tileSize);
     const maxX=Math.floor((ball.x+ball.r)/tileSize);
@@ -331,8 +318,9 @@ function resolveWallCollisions(){
 }
 
 /* ============================================================
-   GAME STATE HANDLING
+   GAME STATE
    ============================================================ */
+
 function resetBall(){
     ball.x=(startPos.x+0.5)*tileSize;
     ball.y=(startPos.y+0.5)*tileSize;
@@ -341,10 +329,12 @@ function resetBall(){
     state.message='';
     state.path=[];
 }
+
 function lost(){
     state.message='Fell into a hole! Restarting…';
     setTimeout(resetBall,800);
 }
+
 function win(){
     state.message='You reached the spiral! Congratulations.';
     ball.vx=ball.vy=0;
@@ -368,7 +358,7 @@ window.addEventListener('keyup', e=>{
     if(e.key==="ArrowDown"||e.key==="s") keys.down=false;
 });
 
-/* ----- Pointer drag tilt ----- */
+/* Pointer drag tilt */
 canvas.addEventListener('pointerdown', e=>{
     pointer.down=true;
     pointer.startX=e.clientX;
@@ -389,6 +379,7 @@ canvas.addEventListener('pointerup', e=>{
 /* ============================================================
    LOOP
    ============================================================ */
+
 function step(now){
     if(!state.lastTime) state.lastTime=now;
     const dt=Math.min(0.03,(now-state.lastTime)/1000);
@@ -404,7 +395,7 @@ function step(now){
 document.getElementById('restart').onclick=resetBall;
 document.getElementById('toggle-trace').onclick=()=>state.trace=!state.trace;
 
-/* Resize for crisp tiles */
+/* Resize */
 function adjustCanvas(){
     const sz=Math.min(window.innerWidth-40,window.innerHeight-40,720);
     canvas.width=sz;
@@ -415,7 +406,7 @@ function adjustCanvas(){
 }
 window.addEventListener('resize', adjustCanvas);
 
-/* START GAME */
+/* START */
 adjustCanvas();
 resetBall();
 requestAnimationFrame(step);
