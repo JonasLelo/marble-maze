@@ -7,6 +7,10 @@
     <style>
         html,body{height:100%;margin:0;background:#efe7d6;display:flex;align-items:center;justify-content:center;font-family:system-ui,Segoe UI,Roboto}
         #game{position:relative}
+        /* Motion-control demo (separate from canvas game) */
+        #motionArea{width:320px;height:320px;margin-top:12px;position:relative;border:6px solid #5b3a21;border-radius:10px;background:linear-gradient(#efe7d6,#e6d7bf);box-shadow:0 8px 24px rgba(0,0,0,.15)}
+        #motionMsg{position:absolute;left:8px;top:8px;color:#333;background:transparent;padding:4px 8px;font-size:13px}
+        #motionBall{position:absolute;width:40px;height:40px;border-radius:50%;background:radial-gradient(circle at 30% 25%,#fff,#cfe0f0 30%,#6b6f76 100%);box-shadow:0 6px 12px rgba(0,0,0,.25);border:1px solid rgba(255,255,255,0.2)}
         canvas{background:linear-gradient(#c7a77a,#b88950);display:block;border:6px solid #5b3a21;box-shadow:0 8px 24px rgba(0,0,0,.35)}
         #ui{position:absolute;left:8px;top:8px;color:#fff;display:flex;gap:8px}
         button{background:#333;color:#fff;border:none;padding:6px 10px;border-radius:6px;cursor:pointer}
@@ -23,6 +27,12 @@
         </div>
         <div id="msg">Use arrow keys, drag, or tilt. Reach the spiral. Avoid black holes.</div>
         <div id="legend">Holes = black • Goal = spiral</div>
+    </div>
+
+    <!-- Simple DOM-based motion demo (uses device tilt or mouse as fallback) -->
+    <div id="motionArea">
+        <div id="motionMsg">Tilt your device to roll the ball</div>
+        <div id="motionBall"></div>
     </div>
 
 <script>
@@ -403,6 +413,107 @@ document.getElementById('toggle-trace').addEventListener('click', ()=>{
 });
 
 /* initialize and run */
+
+/* ------------------------------
+   Small DOM motion-control demo
+   Uses deviceorientation or mouse as fallback
+   Kept separate from the canvas-based maze to avoid id collisions
+------------------------------ */
+(function(){
+    const gameArea = document.getElementById('motionArea');
+    const ballEl = document.getElementById('motionBall');
+    const msgEl = document.getElementById('motionMsg');
+
+    function getBox(){ return { w: gameArea.clientWidth, h: gameArea.clientHeight }; }
+    let box = getBox();
+
+    const marble = {
+        x: box.w/2,
+        y: box.h/2,
+        vx: 0,
+        vy: 0,
+        radius: 20,
+        friction: 0.99
+    };
+
+    function applyBallSize(){
+        ballEl.style.width = (marble.radius*2) + 'px';
+        ballEl.style.height = (marble.radius*2) + 'px';
+        ballEl.style.left = (marble.x - marble.radius) + 'px';
+        ballEl.style.top = (marble.y - marble.radius) + 'px';
+    }
+    applyBallSize();
+
+    let gravityX = 0, gravityY = 0;
+
+    if (window.DeviceOrientationEvent) {
+        window.addEventListener('deviceorientation', (e) => {
+            if(e.gamma != null && e.beta != null){
+                gravityX = -e.gamma/45;
+                gravityY = e.beta/45;
+            }
+        });
+    } else {
+        window.addEventListener('mousemove', (e) => {
+            const rect = gameArea.getBoundingClientRect();
+            const cx = rect.left + rect.width / 2;
+            const cy = rect.top + rect.height / 2;
+
+            gravityX = (e.clientX - cx) / (rect.width / 2);
+            gravityY = (e.clientY - cy) / (rect.height / 2);
+        });
+    }
+
+    function updatePhysics(){
+        box = getBox();
+
+        // Apply gravity
+        marble.vx += -gravityX * 0.6;
+        marble.vy += -gravityY * 0.6;
+
+        // Apply friction
+        marble.vx *= marble.friction;
+        marble.vy *= marble.friction;
+
+        // Move marble
+        marble.x += marble.vx;
+        marble.y += marble.vy;
+
+        // Collision with walls + bounce
+        if (marble.x < marble.radius) {
+            marble.x = marble.radius;
+            marble.vx *= -0.6;
+        }
+        if (marble.x > box.w - marble.radius) {
+            marble.x = box.w - marble.radius;
+            marble.vx *= -0.6;
+        }
+        if (marble.y < marble.radius) {
+            marble.y = marble.radius;
+            marble.vy *= -0.6;
+        }
+        if (marble.y > box.h - marble.radius) {
+            marble.y = box.h - marble.radius;
+            marble.vy *= -0.6;
+        }
+
+        // Update visual position
+        ballEl.style.left = (marble.x - marble.radius) + "px";
+        ballEl.style.top = (marble.y - marble.radius) + "px";
+
+        requestAnimationFrame(updatePhysics);
+    }
+
+    window.addEventListener('resize', ()=>{
+        box = getBox();
+        marble.x = Math.max(marble.radius, Math.min(marble.x, box.w - marble.radius));
+        marble.y = Math.max(marble.radius, Math.min(marble.y, box.h - marble.radius));
+        applyBallSize();
+    });
+
+    updatePhysics();
+})();
+
 adjustCanvas();
 resetBall();
 requestAnimationFrame(step);
