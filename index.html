@@ -25,6 +25,18 @@
         <div id="legend">Holes = black • Goal = spiral</div>
     </div>
 
+    <!-- Motion permission prompt (shown on iOS where permission is required) -->
+    <div id="motionPermission" style="display:none;position:fixed;inset:0;backdrop-filter:blur(4px);align-items:center;justify-content:center;z-index:9999;">
+        <div style="background:#fff;padding:18px 20px;border-radius:10px;box-shadow:0 10px 30px rgba(0,0,0,.25);max-width:92%;margin:auto;text-align:center;color:#222">
+            <div style="font-weight:600;margin-bottom:8px">Enable motion controls</div>
+            <div style="font-size:14px;color:#555;margin-bottom:12px">This site uses device motion to let you tilt your device to move the marble. Please allow motion access.</div>
+            <div style="display:flex;gap:8px;justify-content:center">
+                <button id="enable-motion" style="padding:8px 12px;border-radius:6px;border:none;background:#2b8cff;color:#fff;cursor:pointer">Enable</button>
+                <button id="dismiss-motion" style="padding:8px 12px;border-radius:6px;border:1px solid #ccc;background:#fff;color:#333;cursor:pointer">Not now</button>
+            </div>
+        </div>
+    </div>
+
 <script>
 /*
     Marble Maze
@@ -399,34 +411,24 @@ canvas.addEventListener('pointerup', (e)=>{
     canvas.releasePointerCapture && canvas.releasePointerCapture(e.pointerId);
 });
 
-/* Device orientation (tilt) support */
-if(window.DeviceOrientationEvent){
-    window.addEventListener('deviceorientation', e=>{
-        // gamma: left-right tilt [-90..90], beta: front-back [-180..180]
-        if(e.gamma !== null && e.beta !== null){
-            // normalized tilt values (-1..1)
-            const gx = e.gamma / 90; // -1..1
-            const gy = (e.beta - 45) / 90; // offset so phone upright is neutral (optional)
-            gravityX = gx;
-            gravityY = gy;
-        }
-    }, true);
-}
-
+/* Device orientation (tilt) support - single, permission-aware initializer */
 let gravityX = 0;
 let gravityY = 0;
 const gameEl = document.getElementById('game');
 
-if (window.DeviceOrientationEvent) {
+function enableDeviceOrientation(){
+    // Single listener: normalize to [-1..1] and store in gravityX/gravityY
     window.addEventListener('deviceorientation', (ev) => {
         if (ev.gamma != null && ev.beta != null) {
             // map device tilt to a normalized gravity vector (-1..1)
             gravityX = Math.max(-1, Math.min(1, -ev.gamma / 45));
-            gravityY = Math.max(-1, Math.min(1, ev.beta / 45));
+            gravityY = Math.max(-1, Math.min(1, (ev.beta - 45) / 45));
         }
     }, true);
-} else {
-    // fallback for desktop: mouse position around the game center acts as tilt
+}
+
+// mouse fallback: emulate tilt by cursor around game center
+function enableMouseTiltFallback(){
     window.addEventListener('mousemove', (e) => {
         const rect = gameEl.getBoundingClientRect();
         const cx = rect.left + rect.width / 2;
@@ -437,6 +439,50 @@ if (window.DeviceOrientationEvent) {
         gravityY = Math.max(-1, Math.min(1, gravityY));
     });
 }
+
+function showMotionPrompt(){
+    const el = document.getElementById('motionPermission');
+    if(el) el.style.display = 'flex';
+}
+function hideMotionPrompt(){
+    const el = document.getElementById('motionPermission');
+    if(el) el.style.display = 'none';
+}
+
+function requestMotionPermission(){
+    // iOS Safari requires a user gesture to request permission
+    if (typeof DeviceOrientationEvent !== 'undefined' && typeof DeviceOrientationEvent.requestPermission === 'function'){
+        showMotionPrompt();
+        document.getElementById('enable-motion').addEventListener('click', ()=>{
+            DeviceOrientationEvent.requestPermission().then(resp=>{
+                hideMotionPrompt();
+                if(resp === 'granted'){
+                    enableDeviceOrientation();
+                } else {
+                    // permission denied – fall back to mouse
+                    enableMouseTiltFallback();
+                }
+            }).catch(err=>{
+                console.error('Permission request error', err);
+                hideMotionPrompt();
+                enableMouseTiltFallback();
+            });
+        });
+        document.getElementById('dismiss-motion').addEventListener('click', ()=>{
+            hideMotionPrompt();
+            enableMouseTiltFallback();
+        });
+    } else if (window.DeviceOrientationEvent){
+        // no explicit permission API — just enable
+        enableDeviceOrientation();
+    } else {
+        // no deviceorientation – use mouse fallback
+        enableMouseTiltFallback();
+    }
+}
+
+// initialize motion input handling
+requestMotionPermission();
 /* UI buttons */
 document.getElementById('restart').addEventListener('click', ()=>{ resetBall(); state.message=''; });
 document.getElementById('toggle-trace').addEventListener('click', ()=>{
