@@ -2,107 +2,120 @@
 <html lang="en">
 <head>
 <meta charset="utf-8" />
-<title>Marble Maze</title>
+<title>Marble Maze — Choose Maze</title>
 <meta name="viewport" content="width=device-width,initial-scale=1" />
 <style>
 html,body{height:100%;margin:0;background:#efe7d6;display:flex;align-items:center;justify-content:center;font-family:system-ui,Segoe UI,Roboto}
-#game{position:relative;display:none;}
+#game{position:relative}
 canvas{background:linear-gradient(#c7a77a,#b88950);display:block;border:6px solid #5b3a21;box-shadow:0 8px 24px rgba(0,0,0,.35)}
 #ui{position:absolute;left:8px;top:8px;color:#fff;display:flex;gap:8px}
 button{background:#333;color:#fff;border:none;padding:6px 10px;border-radius:6px;cursor:pointer}
 #msg{position:absolute;right:8px;top:8px;background:rgba(0,0,0,.6);color:#fff;padding:8px 12px;border-radius:6px}
 #legend{position:absolute;left:8px;bottom:8px;background:rgba(0,0,0,.6);color:#fff;padding:6px 10px;border-radius:6px;font-size:13px}
 
-/* Starting screen */
+/* START SCREEN */
 #start-screen{
-    position:absolute;
-    top:0; left:0;
-    width:100%; height:100%;
-    background:rgba(0,0,0,0.8);
+    position:fixed;
+    inset:0;
     display:flex;
-    flex-direction:column;
     align-items:center;
     justify-content:center;
-    color:#fff;
+    background:linear-gradient(rgba(0,0,0,0.45),rgba(0,0,0,0.45));
+    z-index:1000;
 }
-#start-screen h1{margin-bottom:20px}
-.maze-option{
-    background:#333;
-    margin:10px;
-    padding:10px;
-    border-radius:8px;
-    cursor:pointer;
+#start-panel{
+    background:#fff;
+    padding:20px;
+    border-radius:12px;
+    box-shadow:0 10px 40px rgba(0,0,0,0.5);
     display:flex;
-    flex-direction:column;
+    gap:16px;
     align-items:center;
-    transition: transform 0.2s, box-shadow 0.2s;
 }
-.maze-option:hover{
-    transform: scale(1.05);
-    box-shadow:0 0 20px rgba(255,255,255,0.5);
+.maze-option{
+    width:150px;
+    text-align:center;
+    cursor:pointer;
+    border-radius:8px;
+    padding:8px;
+    transition:transform .15s, box-shadow .15s;
+    background:#f7f2e8;
+    box-shadow:0 6px 14px rgba(0,0,0,0.15);
 }
-.maze-option canvas{
-    border:2px solid #fff;
-    margin-bottom:8px;
-}
-.difficulty-label{
-    font-weight:bold;
-    font-size:14px;
-}
-.options-container{display:flex; flex-wrap:wrap; justify-content:center;}
+.maze-option:hover{transform:translateY(-6px); box-shadow:0 14px 30px rgba(0,0,0,0.2);}
+.preview{width:120px;height:120px;border:1px solid #ccc;background:#eadac7;margin:4px auto;display:block}
+.difficulty{font-weight:700;margin-top:6px}
+.hint{font-size:13px;color:#444;margin-top:6px}
+.hidden{display:none}
+.selected{outline:3px solid #2b7; box-shadow:0 8px 26px rgba(43,119,51,0.12)}
 </style>
 </head>
 <body>
-
-<div id="start-screen">
-    <h1>Select a Maze</h1>
-    <div class="options-container">
-        <div class="maze-option" data-maze="0">
-            <canvas id="preview0" width="100" height="100"></canvas>
-            <div class="difficulty-label">Easy</div>
+<div id="game">
+        <canvas id="c" width="720" height="720"></canvas>
+        <div id="ui">
+                <button id="restart">Restart</button>
+                <button id="toggle-trace">Toggle Trace</button>
         </div>
-        <div class="maze-option" data-maze="1">
-            <canvas id="preview1" width="100" height="100"></canvas>
-            <div class="difficulty-label">Medium</div>
-        </div>
-        <div class="maze-option" data-maze="2">
-            <canvas id="preview2" width="100" height="100"></canvas>
-            <div class="difficulty-label">Hard</div>
-        </div>
-    </div>
+        <div id="msg">Use arrow keys, drag, or tilt. Reach the spiral. Avoid black holes.</div>
+        <div id="legend">Holes = black • Goal = spiral</div>
 </div>
 
-<div id="game">
-    <canvas id="c" width="720" height="720"></canvas>
-    <div id="ui">
-        <button id="restart">Restart</button>
-        <button id="toggle-trace">Toggle Trace</button>
+<!-- Start screen overlay -->
+<div id="start-screen">
+    <div id="start-panel">
+        <div class="maze-option" data-index="0" title="Easy">
+            <canvas class="preview" id="preview-0" width="120" height="120"></canvas>
+            <div class="difficulty">Easy</div>
+            <div class="hint">Beginner</div>
+        </div>
+        <div class="maze-option" data-index="1" title="Medium">
+            <canvas class="preview" id="preview-1" width="120" height="120"></canvas>
+            <div class="difficulty">Medium</div>
+            <div class="hint">Challenging</div>
+        </div>
+        <div class="maze-option" data-index="2" title="Hard">
+            <canvas class="preview" id="preview-2" width="120" height="120"></canvas>
+            <div class="difficulty">Hard</div>
+            <div class="hint">Expert</div>
+        </div>
     </div>
-    <div id="msg">Use arrow keys, drag, or tilt. Reach the spiral. Avoid black holes.</div>
-    <div id="legend">Holes = black • Goal = spiral</div>
 </div>
 
 <script>
-/* ===================== MAZES ===================== */
-const MAZES = [];
-
-// Example Maze 1 (replace with your data)
-MAZES.push([
+/* ======= Maze definitions (three mazes) ======= */
+/* Easy (original) */
+const MAZE_EASY = [
  "W W W W W W W W W W",
- "W S . . . W . . . W",
+ "W . . . . W . . . W",
  "W . . O . W . . . W",
  "W . W W . W . W . W",
  "W . W G . . . W . W",
  "W . W W W W . W . W",
  "W . . . . W . W . W",
  "W W W W . W . W . W",
- "W . . . . . . O . W",
+ "W S . . . . . O . W",
  "W W W W W W . . . W",
  "W W W W W W W W W W"
-].map(r=>r.split(' ')));
+].map(r=>r.split(' '));
 
-// Example Maze 2
-MAZES.push([
+/* Medium (new layout) */
+const MAZE_MED = [
+ "W W W W W W W W W W",
+ "W S . . W . . . O W",
+ "W . W . W W . . . W",
+ "W . W . . . . W W W",
+ "W O W W W . W . G W",
+ "W . . O W . W . W W",
+ "W W . W W . W . . W",
+ "W . . . . . W O . W",
+ "W W W W W W W W . W",
+ "W W W W W W W W W W",
+ "W W W W W W W W W W"
+].map(r=>r.split(' '));
+
+/* Hard (dense walls) */
+const MAZE_HARD = [
  "W W W W W W W W W W",
  "W S . W . . . W . W",
  "W W . W O W . W . W",
@@ -112,235 +125,426 @@ MAZES.push([
  "W . W W W W W W W W",
  "W . . . O . . . . W",
  "W W W W W W W W . W",
- "W W W W W W W W W W"
-].map(r=>r.split(' ')));
-
-// Example Maze 3
-MAZES.push([
  "W W W W W W W W W W",
- "W S . W . . . O . W",
- "W W . W W W . W . W",
- "W . . . O W . W . W",
- "W . W W . W . W G W",
- "W . W . . . . W . W",
- "W . W W W O W W . W",
- "W . . . . . . . . W",
- "W W W W W W W W . W",
  "W W W W W W W W W W"
-].map(r=>r.split(' ')));
+].map(r=>r.split(' '));
 
-/* ============ GAME VARIABLES ============ */
-let MAZE, rows, cols, tileSize, radius;
-let startPos, goalPos, holeTiles;
-let ball = {x:0,y:0,vx:0,vy:0,r:0};
-const state={running:true,trace:false,message:'',path:[],lastTime:null};
-const input={ax:0,ay:0};
-const keys={left:false,right:false,up:false,down:false};
-const pointer={down:false,startX:0,startY:0};
-let gravityX=0,gravityY=0;
+const MAZES = [MAZE_EASY, MAZE_MED, MAZE_HARD];
 
-/* ============ START SCREEN LOGIC ============ */
-const startScreen = document.getElementById('start-screen');
-const mazeOptions = document.querySelectorAll('.maze-option');
+/* ======= Core game variables (will be initialized per selection) ======= */
+let MAZE = null; // will be set to chosen maze array
+let canvas = document.getElementById('c');
+let ctx = canvas.getContext('2d');
 
-mazeOptions.forEach(opt=>{
-    opt.addEventListener('click',()=>{
-        const idx = parseInt(opt.dataset.maze);
-        loadMaze(idx);
-        startScreen.style.display='none';
-        document.getElementById('game').style.display='block';
-        adjustCanvas();
-        resetBall();
-        requestAnimationFrame(step);
-    });
-});
+let rows = 0, cols = 0, tileSize = 40, radius = 12;
+let startPos, goalPos, holeTiles = [];
 
-/* ============ LOAD SELECTED MAZE ============ */
-function loadMaze(idx){
-    MAZE = MAZES[idx];
-    rows = MAZE.length;
-    cols = MAZE[0].length;
-    tileSize = Math.min(720/cols,720/rows);
-    radius = tileSize*0.35;
-    startPos = findTile('S');
-    goalPos = findTile('G');
-    holeTiles = findAllTiles('O');
-    ball = {x:(startPos.x+0.5)*tileSize, y:(startPos.y+0.5)*tileSize, vx:0, vy:0, r:radius};
-}
-
-/* ============ HELPERS ============ */
 function findTile(ch){
-    for(let y=0;y<rows;y++)
-        for(let x=0;x<cols;x++)
-            if(MAZE[y][x]===ch) return {x,y};
+        for(let y=0;y<rows;y++) for(let x=0;x<cols;x++) if(MAZE[y][x]===ch) return {x,y};
 }
 function findAllTiles(ch){
-    const out=[]; for(let y=0;y<rows;y++) for(let x=0;x<cols;x++) if(MAZE[y][x]===ch) out.push({x,y}); return out;
+        const out=[];
+        for(let y=0;y<rows;y++) for(let x=0;x<cols;x++) if(MAZE[y][x]===ch) out.push({x,y});
+        return out;
 }
 
-/* ============ PREVIEW CANVAS DRAWING ============ */
-function drawPreview(maze,canvas){
-    const ctx = canvas.getContext('2d');
-    const w = canvas.width, h = canvas.height;
-    const rows = maze.length, cols = maze[0].length;
-    const ts = Math.min(w/cols,h/rows);
-    ctx.clearRect(0,0,w,h);
+/* Ball and state */
+let ball = {x:0,y:0,vx:0,vy:0,r:10};
+const state = {
+        running:false, trace:false, message:'', path:[], lastTime:null
+};
 
-    for(let y=0;y<rows;y++){
-        for(let x=0;x<cols;x++){
-            const t = maze[y][x];
-            const px=x*ts, py=y*ts;
-            if(t==='W'){ ctx.fillStyle='#6b4a2b'; ctx.fillRect(px,py,ts,ts);}
-            else if(t==='O'){ ctx.fillStyle='#111'; ctx.fillRect(px,py,ts,ts);}
-            else if(t==='G'){ ctx.fillStyle='#ffeaa7'; ctx.fillRect(px,py,ts,ts);}
-            else if(t==='S'){ ctx.fillStyle='#4caf50'; ctx.fillRect(px,py,ts,ts);}
-            else ctx.fillStyle='#d9c7a6',ctx.fillRect(px,py,ts,ts);
-        }
-    }
-}
-drawPreview(MAZES[0],document.getElementById('preview0'));
-drawPreview(MAZES[1],document.getElementById('preview1'));
-drawPreview(MAZES[2],document.getElementById('preview2'));
+/* Physics params */
+const friction = 0.98;
+const maxSpeed = 800;
+const accPower = 1800;
 
-/* ============ DEVICE / MOUSE INPUT ============ */
-if(window.DeviceOrientationEvent){
-    window.addEventListener("deviceorientation", e=>{
-        if(e.gamma==null||e.beta==null) return;
-        gravityX = -e.beta/45;
-        gravityY = e.gamma/45;
-    });
+/* Input */
+let input = {ax:0, ay:0};
+const keys = {left:false,right:false,up:false,down:false};
+const pointer = {down:false,startX:0,startY:0};
+
+/* Gravity / tilt (axes swapped as requested) */
+let gravityX = 0, gravityY = 0;
+
+if (window.DeviceOrientationEvent) {
+        window.addEventListener("deviceorientation", e => {
+                if (e.gamma == null || e.beta == null) return;
+                gravityX = -e.beta / 45;
+                gravityY =  e.gamma / 45;
+        });
 } else {
-    const canvasEl=document.getElementById('c');
-    canvasEl.addEventListener('mousemove',e=>{
-        const rect = canvasEl.getBoundingClientRect();
-        const cx=rect.left+rect.width/2;
-        const cy=rect.top+rect.height/2;
-        gravityX=(e.clientX-cx)/(rect.width/2);
-        gravityY=(e.clientY-cy)/(rect.height/2);
-    });
+        window.addEventListener("mousemove", e => {
+                const rect = canvas.getBoundingClientRect();
+                const cx = rect.left + rect.width/2;
+                const cy = rect.top + rect.height/2;
+                gravityX = (e.clientX - cx) / (rect.width/2);
+                gravityY = (e.clientY - cy) / (rect.height/2);
+        });
 }
 
-/* ============ KEYBOARD INPUT ============ */
+/* ======= Preview rendering for start screen ======= */
+function drawPreviewToCanvas(pcan, maze){
+        const pctx = pcan.getContext('2d');
+        const w = pcan.width, h = pcan.height;
+        pctx.clearRect(0,0,w,h);
+        const r = maze.length, c = maze[0].length;
+        const ts = Math.min(w/c, h/r);
+        // background
+        pctx.fillStyle = "#e8d9bf";
+        pctx.fillRect(0,0,w,h);
+        for(let y=0;y<r;y++){
+                for(let x=0;x<c;x++){
+                        const px = x*ts + (w - ts*c)/2;
+                        const py = y*ts + (h - ts*r)/2;
+                        const t = maze[y][x];
+                        if(t==='W'){
+                                pctx.fillStyle = '#6b4a2b';
+                                pctx.fillRect(px,py,ts,ts);
+                                pctx.fillStyle='#8f6237';
+                                pctx.fillRect(px+1,py+1,ts-2,ts-2);
+                        } else {
+                                pctx.fillStyle='#f3ead7';
+                                pctx.fillRect(px,py,ts,ts);
+                        }
+                        if(t==='O'){
+                                pctx.fillStyle='#000';
+                                pctx.beginPath();
+                                pctx.arc(px+ts/2,py+ts/2,ts*0.22,0,Math.PI*2);
+                                pctx.fill();
+                        }
+                        if(t==='G'){
+                                pctx.fillStyle='#ffd07a';
+                                pctx.beginPath();
+                                pctx.arc(px+ts/2,py+ts/2,ts*0.22,0,Math.PI*2);
+                                pctx.fill();
+                                pctx.strokeStyle='#6b3d00'; pctx.lineWidth=1;
+                                pctx.stroke();
+                        }
+                        if(t==='S'){
+                                pctx.fillStyle='#2b7';
+                                pctx.beginPath();
+                                pctx.arc(px+ts/2,py+ts/2,ts*0.16,0,Math.PI*2);
+                                pctx.fill();
+                        }
+                }
+        }
+}
+
+/* Render previews now */
+for(let i=0;i<MAZES.length;i++){
+        const pcan = document.getElementById('preview-'+i);
+        drawPreviewToCanvas(pcan, MAZES[i]);
+}
+
+/* ======= Drawing functions (use current MAZE) ======= */
+function draw(){
+        ctx.clearRect(0,0,canvas.width,canvas.height);
+        if(!MAZE) return;
+        for(let y=0;y<rows;y++){
+                for(let x=0;x<cols;x++){
+                        const px=x*tileSize, py=y*tileSize;
+                        const t=MAZE[y][x];
+                        if(t==='W'){
+                                ctx.fillStyle='#6b4a2b';
+                                ctx.fillRect(px,py,tileSize,tileSize);
+                                ctx.fillStyle='#8f6237';
+                                ctx.fillRect(px+2,py+2,tileSize-4,tileSize-4);
+                        } else {
+                                ctx.fillStyle='#d9c7a6';
+                                ctx.fillRect(px,py,tileSize,tileSize);
+                        }
+                        if(t==='O') drawHole(px+tileSize/2, py+tileSize/2, tileSize*0.4);
+                        if(t==='G') drawSpiral(px+tileSize/2, py+tileSize/2, tileSize*0.42);
+                }
+        }
+
+        if(state.trace && state.path.length>1){
+                ctx.beginPath();
+                ctx.strokeStyle='rgba(0,0,0,0.2)';
+                ctx.lineWidth=2;
+                ctx.moveTo(state.path[0].x,state.path[0].y);
+                for(let p of state.path) ctx.lineTo(p.x,p.y);
+                ctx.stroke();
+        }
+
+        drawBall();
+
+        document.getElementById("msg").textContent =
+                state.message || "Use arrow keys, drag, or tilt. Reach the spiral. Avoid black holes.";
+}
+
+function drawBall(){
+        const g=ctx.createRadialGradient(
+                ball.x-ball.r*0.3,
+                ball.y-ball.r*0.3,
+                ball.r*0.1,
+                ball.x, ball.y, ball.r
+        );
+        g.addColorStop(0,'#fff');
+        g.addColorStop(0.2,'#dfe8f2');
+        g.addColorStop(1,'#7a7f85');
+
+        ctx.fillStyle=g;
+        ctx.beginPath();
+        ctx.arc(ball.x,ball.y,ball.r,0,Math.PI*2);
+        ctx.fill();
+
+        ctx.strokeStyle='rgba(255,255,255,0.15)';
+        ctx.lineWidth=1;
+        ctx.stroke();
+}
+
+function drawHole(cx,cy,r){
+        const g=ctx.createRadialGradient(cx-r*0.2,cy-r*0.2,1,cx,cy,r);
+        g.addColorStop(0,'#111');
+        g.addColorStop(1,'#000');
+        ctx.fillStyle=g;
+        ctx.beginPath();
+        ctx.arc(cx,cy,r,0,Math.PI*2);
+        ctx.fill();
+}
+
+function drawSpiral(cx,cy,r){
+        const grad=ctx.createLinearGradient(cx-r,cy-r,cx+r,cy+r);
+        grad.addColorStop(0,'#ffeaa7');
+        grad.addColorStop(1,'#ffd07a');
+        ctx.fillStyle=grad;
+        ctx.beginPath();
+        ctx.arc(cx,cy,r,0,Math.PI*2);
+        ctx.fill();
+
+        ctx.save();
+        ctx.translate(cx,cy);
+        ctx.strokeStyle='#6b3d00';
+        ctx.lineWidth=Math.max(2,r*0.08);
+        ctx.beginPath();
+        for(let i=0;i<120;i++){
+                const t=i/120;
+                const a=t*5*Math.PI*2 - Math.PI/2;
+                const rad=r*(1 - t*0.9);
+                const x=Math.cos(a)*rad;
+                const y=Math.sin(a)*rad;
+                if(i==0) ctx.moveTo(x,y);
+                else ctx.lineTo(x,y);
+        }
+        ctx.stroke();
+        ctx.restore();
+}
+
+/* ======= Physics and collisions ======= */
+function physics(dt){
+        let ax = -gravityX * accPower;
+        let ay = -gravityY * accPower;
+
+        if(keys.left)  ax -= accPower;
+        if(keys.right) ax += accPower;
+        if(keys.up)    ay -= accPower;
+        if(keys.down)  ay += accPower;
+
+        ax += input.ax;
+        ay += input.ay;
+
+        ball.vx += ax * dt;
+        ball.vy += ay * dt;
+
+        const s = Math.hypot(ball.vx, ball.vy);
+        if(s > maxSpeed){
+                const k = maxSpeed/s;
+                ball.vx *= k;
+                ball.vy *= k;
+        }
+
+        ball.vx *= Math.pow(friction, dt*60);
+        ball.vy *= Math.pow(friction, dt*60);
+
+        ball.x += ball.vx * dt;
+        ball.y += ball.vy * dt;
+
+        resolveWallCollisions();
+
+        for(const h of holeTiles){
+                const cx=(h.x+0.5)*tileSize, cy=(h.y+0.5)*tileSize;
+                if(Math.hypot(ball.x-cx,ball.y-cy)<tileSize*0.35)
+                        return lost();
+        }
+
+        const gx=(goalPos.x+0.5)*tileSize, gy=(goalPos.y+0.5)*tileSize;
+        if(Math.hypot(ball.x-gx,ball.y-gy)<tileSize*0.35)
+                return win();
+
+        if(state.trace){
+                if(state.path.length===0 ||
+                        Math.hypot(ball.x-state.path.at(-1).x,ball.y-state.path.at(-1).y)>6)
+                        state.path.push({x:ball.x,y:ball.y});
+                if(state.path.length>800) state.path.shift();
+        }
+}
+
+function resolveWallCollisions(){
+        const minX=Math.floor((ball.x-ball.r)/tileSize);
+        const maxX=Math.floor((ball.x+ball.r)/tileSize);
+        const minY=Math.floor((ball.y-ball.r)/tileSize);
+        const maxY=Math.floor((ball.y+ball.r)/tileSize);
+
+        for(let ty=minY;ty<=maxY;ty++){
+                for(let tx=minX;tx<=maxX;tx++){
+                        if(ty<0||ty>=rows||tx<0||tx>=cols) continue;
+                        if(MAZE[ty][tx]!=='W') continue;
+
+                        const rx=tx*tileSize, ry=ty*tileSize;
+
+                        const closestX=Math.max(rx, Math.min(ball.x, rx+tileSize));
+                        const closestY=Math.max(ry, Math.min(ball.y, ry+tileSize));
+
+                        const dx=ball.x-closestX;
+                        const dy=ball.y-closestY;
+                        const dist2=dx*dx+dy*dy;
+
+                        if(dist2 < ball.r*ball.r){
+                                const dist=Math.sqrt(dist2)||0.001;
+                                const overlap=ball.r-dist;
+
+                                const nx=dx/dist, ny=dy/dist;
+
+                                ball.x += nx*overlap;
+                                ball.y += ny*overlap;
+
+                                const vdot = ball.vx*nx + ball.vy*ny;
+                                ball.vx -= 1.6*vdot*nx;
+                                ball.vy -= 1.6*vdot*ny;
+
+                                ball.vx *= 0.75;
+                                ball.vy *= 0.75;
+                        }
+                }
+        }
+}
+
+/* ======= Game state handlers ======= */
+function resetBall(){
+        startPos = findTile('S');
+        goalPos = findTile('G');
+        holeTiles = findAllTiles('O');
+        ball.x=(startPos.x+0.5)*tileSize;
+        ball.y=(startPos.y+0.5)*tileSize;
+        ball.vx=0; ball.vy=0;
+        state.message='';
+        state.path=[];
+}
+
+function lost(){
+        state.message='Fell into a hole! Restarting…';
+        setTimeout(resetBall,800);
+}
+
+function win(){
+        state.message='You reached the spiral! Congratulations.';
+        ball.vx=ball.vy=0;
+        setTimeout(resetBall,1500);
+}
+
+/* ======= Input events (attached once) ======= */
 window.addEventListener('keydown', e=>{
-    if(e.key==="ArrowLeft"||e.key==="a"){ keys.left=true; e.preventDefault();}
-    if(e.key==="ArrowRight"||e.key==="d"){ keys.right=true; e.preventDefault();}
-    if(e.key==="ArrowUp"||e.key==="w"){ keys.up=true; e.preventDefault();}
-    if(e.key==="ArrowDown"||e.key==="s"){ keys.down=true; e.preventDefault();}
+        if(e.key==="ArrowLeft"||e.key==="a"){ keys.left=true; e.preventDefault(); }
+        if(e.key==="ArrowRight"||e.key==="d"){ keys.right=true; e.preventDefault(); }
+        if(e.key==="ArrowUp"||e.key==="w"){ keys.up=true; e.preventDefault(); }
+        if(e.key==="ArrowDown"||e.key==="s"){ keys.down=true; e.preventDefault(); }
 });
 window.addEventListener('keyup', e=>{
-    if(e.key==="ArrowLeft"||e.key==="a") keys.left=false;
-    if(e.key==="ArrowRight"||e.key==="d") keys.right=false;
-    if(e.key==="ArrowUp"||e.key==="w") keys.up=false;
-    if(e.key==="ArrowDown"||e.key==="s") keys.down=false;
+        if(e.key==="ArrowLeft"||e.key==="a") keys.left=false;
+        if(e.key==="ArrowRight"||e.key==="d") keys.right=false;
+        if(e.key==="ArrowUp"||e.key==="w") keys.up=false;
+        if(e.key==="ArrowDown"||e.key==="s") keys.down=false;
 });
 
-/* ============ POINTER DRAG ============ */
-const canvasEl=document.getElementById('c');
-canvasEl.addEventListener('pointerdown', e=>{pointer.down=true;pointer.startX=e.clientX;pointer.startY=e.clientY;canvasEl.setPointerCapture(e.pointerId);});
-canvasEl.addEventListener('pointermove', e=>{if(!pointer.down) return; input.ax=(e.clientX-pointer.startX)*12; input.ay=(e.clientY-pointer.startY)*12;});
-canvasEl.addEventListener('pointerup', e=>{pointer.down=false; input.ax=input.ay=0; canvasEl.releasePointerCapture?.(e.pointerId);});
+/* Pointer drag tilt */
+canvas.addEventListener('pointerdown', e=>{
+        pointer.down=true;
+        pointer.startX=e.clientX;
+        pointer.startY=e.clientY;
+        canvas.setPointerCapture(e.pointerId);
+});
+canvas.addEventListener('pointermove', e=>{
+        if(!pointer.down) return;
+        input.ax=(e.clientX-pointer.startX)*12;
+        input.ay=(e.clientY-pointer.startY)*12;
+});
+canvas.addEventListener('pointerup', e=>{
+        pointer.down=false;
+        input.ax=input.ay=0;
+        canvas.releasePointerCapture?.(e.pointerId);
+});
 
-/* ============ UI BUTTONS ============ */
-document.getElementById('restart').onclick=()=>resetBall();
-document.getElementById('toggle-trace').onclick=()=>state.trace=!state.trace;
+/* UI buttons */
+document.getElementById('restart').onclick = ()=>{ if(MAZE) resetBall(); };
+document.getElementById('toggle-trace').onclick = ()=>{ state.trace = !state.trace; };
 
-/* ============ CANVAS RESIZE ============ */
+/* ======= Resize handling ======= */
 function adjustCanvas(){
-    const sz=Math.min(window.innerWidth-40,window.innerHeight-40,720);
-    canvasEl.width=sz; canvasEl.height=sz;
-    tileSize=Math.min(canvasEl.width/cols,canvasEl.height/rows);
-    radius=tileSize*0.35; ball.r=radius;
+        const sz=Math.min(window.innerWidth-40,window.innerHeight-40,720);
+        canvas.width=sz;
+        canvas.height=sz;
+        if(!MAZE) return;
+        tileSize=Math.min(canvas.width/cols,canvas.height/rows);
+        radius=tileSize*0.35;
+        ball.r=radius;
 }
 window.addEventListener('resize', adjustCanvas);
 
-/* ============ DRAWING FUNCTIONS ============ */
-function draw(){
-    const ctx = canvasEl.getContext('2d');
-    ctx.clearRect(0,0,canvasEl.width,canvasEl.height);
-    for(let y=0;y<rows;y++){
-        for(let x=0;x<cols;x++){
-            const px=x*tileSize, py=y*tileSize;
-            const t=MAZE[y][x];
-            if(t==='W'){ ctx.fillStyle='#6b4a2b'; ctx.fillRect(px,py,tileSize,tileSize);}
-            else{ ctx.fillStyle='#d9c7a6'; ctx.fillRect(px,py,tileSize,tileSize);}
-            if(t==='O') drawHole(px+tileSize/2,py+tileSize/2,tileSize*0.4);
-            if(t==='G') drawSpiral(px+tileSize/2,py+tileSize/2,tileSize*0.42);
-        }
-    }
-    if(state.trace && state.path.length>1){
-        ctx.beginPath(); ctx.strokeStyle='rgba(0,0,0,0.2)'; ctx.lineWidth=2;
-        ctx.moveTo(state.path[0].x,state.path[0].y);
-        for(let p of state.path) ctx.lineTo(p.x,p.y); ctx.stroke();
-    }
-    drawBall();
-    document.getElementById("msg").textContent= state.message || "Use arrow keys, drag, or tilt. Reach the spiral. Avoid black holes.";
-}
-function drawBall(){
-    const ctx = canvasEl.getContext('2d');
-    const g=ctx.createRadialGradient(ball.x-ball.r*0.3,ball.y-ball.r*0.3,ball.r*0.1,ball.x,ball.y,ball.r);
-    g.addColorStop(0,'#fff'); g.addColorStop(0.2,'#dfe8f2'); g.addColorStop(1,'#7a7f85');
-    ctx.fillStyle=g; ctx.beginPath(); ctx.arc(ball.x,ball.y,ball.r,0,Math.PI*2); ctx.fill();
-}
-function drawHole(cx,cy,r){const ctx = canvasEl.getContext('2d'); ctx.fillStyle='#000'; ctx.beginPath(); ctx.arc(cx,cy,r,0,Math.PI*2); ctx.fill();}
-function drawSpiral(cx,cy,r){const ctx = canvasEl.getContext('2d'); ctx.fillStyle='#ffd07a'; ctx.beginPath(); ctx.arc(cx,cy,r,0,Math.PI*2); ctx.fill();}
-
-/* ============ PHYSICS ============ */
-const friction=0.98, maxSpeed=800, accPower=1800;
-function physics(dt){
-    let ax=-gravityX*accPower+input.ax, ay=-gravityY*accPower+input.ay;
-    if(keys.left) ax-=accPower; if(keys.right) ax+=accPower; if(keys.up) ay-=accPower; if(keys.down) ay+=accPower;
-    ball.vx+=ax*dt; ball.vy+=ay*dt;
-    const s=Math.hypot(ball.vx,ball.vy); if(s>maxSpeed){ const k=maxSpeed/s; ball.vx*=k; ball.vy*=k;}
-    ball.vx*=Math.pow(friction,dt*60); ball.vy*=Math.pow(friction,dt*60);
-    ball.x+=ball.vx*dt; ball.y+=ball.vy*dt;
-    resolveWallCollisions();
-    for(const h of holeTiles){
-        const cx=(h.x+0.5)*tileSize, cy=(h.y+0.5)*tileSize;
-        if(Math.hypot(ball.x-cx,ball.y-cy)<tileSize*0.35) return lost();
-    }
-    const gx=(goalPos.x+0.5)*tileSize, gy=(goalPos.y+0.5)*tileSize;
-    if(Math.hypot(ball.x-gx,ball.y-gy)<tileSize*0.35) return win();
-    if(state.trace){
-        if(state.path.length===0 || Math.hypot(ball.x-state.path.at(-1).x,ball.y-state.path.at(-1).y)>6)
-            state.path.push({x:ball.x,y:ball.y});
-        if(state.path.length>800) state.path.shift();
-    }
-}
-
-/* ============ COLLISIONS ============ */
-function resolveWallCollisions(){
-    const minX=Math.floor((ball.x-ball.r)/tileSize), maxX=Math.floor((ball.x+ball.r)/tileSize);
-    const minY=Math.floor((ball.y-ball.r)/tileSize), maxY=Math.floor((ball.y+ball.r)/tileSize);
-    const ctx = canvasEl.getContext('2d');
-    for(let ty=minY;ty<=maxY;ty++) for(let tx=minX;tx<=maxX;tx++){
-        if(ty<0||ty>=rows||tx<0||tx>=cols) continue; if(MAZE[ty][tx]!=='W') continue;
-        const rx=tx*tileSize, ry=ty*tileSize;
-        const closestX=Math.max(rx, Math.min(ball.x, rx+tileSize));
-        const closestY=Math.max(ry, Math.min(ball.y, ry+tileSize));
-        const dx=ball.x-closestX, dy=ball.y-closestY, dist2=dx*dx+dy*dy;
-        if(dist2<ball.r*ball.r){
-            const dist=Math.sqrt(dist2)||0.001; const overlap=ball.r-dist;
-            const nx=dx/dist, ny=dy/dist;
-            ball.x+=nx*overlap; ball.y+=ny*overlap;
-            const vdot=ball.vx*nx+ball.vy*ny;
-            ball.vx-=1.6*vdot*nx; ball.vy-=1.6*vdot*ny;
-            ball.vx*=0.75; ball.vy*=0.75;
-        }
-    }
-}
-
-/* ============ GAME STATE ============ */
-function resetBall(){ ball.x=(startPos.x+0.5)*tileSize; ball.y=(startPos.y+0.5)*tileSize; ball.vx=0; ball.vy=0; state.message=''; state.path=[];}
-function lost(){ state.message='Fell into a hole! Restarting…'; setTimeout(resetBall,800);}
-function win(){ state.message='You reached the spiral! Congratulations.'; ball.vx=ball.vy=0; setTimeout(resetBall,1500);}
-
-/* ============ MAIN LOOP ============ */
+/* ======= Game loop ======= */
 function step(now){
-    if(!state.lastTime) state.lastTime=now;
-    const dt=Math.min(0.03,(now-state.lastTime)/1000); state.lastTime=now;
-    physics(dt); draw();
-    requestAnimationFrame(step);
+        if(!state.running) { state.lastTime = now; requestAnimationFrame(step); return; }
+        if(!state.lastTime) state.lastTime=now;
+        const dt=Math.min(0.03,(now-state.lastTime)/1000);
+        state.lastTime=now;
+
+        physics(dt);
+        draw();
+
+        requestAnimationFrame(step);
 }
+
+/* ======= Start game with chosen maze ======= */
+function startGameWithMaze(maze){
+        MAZE = maze;
+        rows = MAZE.length;
+        cols = MAZE[0].length;
+        tileSize = Math.min(canvas.width/cols, canvas.height/rows);
+        radius = tileSize*0.35;
+        ball.r = radius;
+        resetBall();
+        state.running = true;
+        state.lastTime = null;
+        document.getElementById('start-screen').classList.add('hidden');
+        // ensure canvas size and tile sizes updated
+        adjustCanvas();
+}
+
+/* Start main animation loop (it will wait until state.running is true) */
+requestAnimationFrame(step);
+
+/* ======= Start screen selection logic ======= */
+const options = document.querySelectorAll('.maze-option');
+options.forEach(opt=>{
+        opt.addEventListener('click', ()=>{
+                const idx = Number(opt.dataset.index);
+                options.forEach(o=>o.classList.remove('selected'));
+                opt.classList.add('selected');
+                // small delay to show selection feedback, then start
+                setTimeout(()=> startGameWithMaze(MAZES[idx]), 100);
+        });
+        opt.addEventListener('mouseenter', ()=> opt.classList.add('hover'));
+        opt.addEventListener('mouseleave', ()=> opt.classList.remove('hover'));
+});
+
+/* Ensure previews are visible on small screens by re-drawing if needed */
+window.addEventListener('load', ()=> {
+        for(let i=0;i<MAZES.length;i++){
+                drawPreviewToCanvas(document.getElementById('preview-'+i), MAZES[i]);
+        }
+        adjustCanvas();
+});
 </script>
 </body>
 </html>
