@@ -15,32 +15,32 @@ button{background:#333;color:#fff;border:none;padding:6px 10px;border-radius:6px
 
 /* START SCREEN */
 #start-screen{
-        position:fixed;
-        inset:0;
-        display:flex;
-        align-items:center;
-        justify-content:center;
-        background:linear-gradient(rgba(0,0,0,0.45),rgba(0,0,0,0.45));
-        z-index:1000;
+    position:fixed;
+    inset:0;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    background:linear-gradient(rgba(0,0,0,0.45),rgba(0,0,0,0.45));
+    z-index:1000;
 }
 #start-panel{
-        background:#fff;
-        padding:20px;
-        border-radius:12px;
-        box-shadow:0 10px 40px rgba(0,0,0,0.5);
-        display:flex;
-        gap:16px;
-        align-items:center;
+    background:#fff;
+    padding:20px;
+    border-radius:12px;
+    box-shadow:0 10px 40px rgba(0,0,0,0.5);
+    display:flex;
+    gap:16px;
+    align-items:center;
 }
 .maze-option{
-        width:150px;
-        text-align:center;
-        cursor:pointer;
-        border-radius:8px;
-        padding:8px;
-        transition:transform .15s, box-shadow .15s;
-        background:#f7f2e8;
-        box-shadow:0 6px 14px rgba(0,0,0,0.15);
+    width:150px;
+    text-align:center;
+    cursor:pointer;
+    border-radius:8px;
+    padding:8px;
+    transition:transform .15s, box-shadow .15s;
+    background:#f7f2e8;
+    box-shadow:0 6px 14px rgba(0,0,0,0.15);
 }
 .maze-option:hover{transform:translateY(-6px); box-shadow:0 14px 30px rgba(0,0,0,0.2);}
 .preview{width:120px;height:120px;border:1px solid #ccc;background:#eadac7;margin:4px auto;display:block}
@@ -48,72 +48,38 @@ button{background:#333;color:#fff;border:none;padding:6px 10px;border-radius:6px
 .hint{font-size:13px;color:#444;margin-top:6px}
 .hidden{display:none}
 .selected{outline:3px solid #2b7; box-shadow:0 8px 26px rgba(43,119,51,0.12)}
-
-/* Permission screen */
-#perm-screen{
-        position:fixed;
-        inset:0;
-        display:flex;
-        align-items:center;
-        justify-content:center;
-        background:linear-gradient(rgba(0,0,0,0.6),rgba(0,0,0,0.6));
-        z-index:1100;
-        color:#fff;
-        text-align:center;
-}
-#perm-panel{
-        background:#222;
-        padding:24px;
-        border-radius:12px;
-        box-shadow:0 10px 40px rgba(0,0,0,0.6);
-        max-width:90%;
-}
-#perm-panel p{margin:0 0 12px}
-#perm-panel button{background:#2b7;padding:10px 16px;color:#012;border-radius:8px;border:none;cursor:pointer}
 </style>
 </head>
 <body>
 <div id="game">
-                <canvas id="c" width="720" height="720"></canvas>
-                <div id="ui">
-                                <button id="restart">Restart</button>
-                                <button id="toggle-trace">Toggle Trace</button>
-                </div>
-                <div id="msg">Use arrow keys, drag, or tilt. Reach the spiral. Avoid black holes.</div>
-                <div id="legend">Holes = black • Goal = spiral</div>
+        <canvas id="c" width="720" height="720"></canvas>
+        <div id="ui">
+                <button id="restart">Restart</button>
+                <button id="toggle-trace">Toggle Trace</button>
+        </div>
+        <div id="msg">Use arrow keys, drag, or tilt. Reach the spiral. Avoid black holes.</div>
+        <div id="legend">Holes = black • Goal = spiral</div>
 </div>
 
-<!-- Start screen overlay (hidden until permission or not required) -->
-<div id="start-screen" class="hidden">
-        <div id="start-panel">
-                <div class="maze-option" data-index="0" title="Easy">
-                        <canvas class="preview" id="preview-0" width="120" height="120"></canvas>
-                        <div class="difficulty">Easy</div>
-                        <div class="hint">Beginner</div>
-                </div>
-                <div class="maze-option" data-index="1" title="Medium">
-                        <canvas class="preview" id="preview-1" width="120" height="120"></canvas>
-                        <div class="difficulty">Medium</div>
-                        <div class="hint">Challenging</div>
-                </div>
-                <div class="maze-option" data-index="2" title="Hard">
-                        <canvas class="preview" id="preview-2" width="120" height="120"></canvas>
-                        <div class="difficulty">Hard</div>
-                        <div class="hint">Expert</div>
-                </div>
+<!-- Start screen overlay -->
+<div id="start-screen">
+    <div id="start-panel">
+        <div class="maze-option" data-index="0" title="Easy">
+            <canvas class="preview" id="preview-0" width="120" height="120"></canvas>
+            <div class="difficulty">Easy</div>
+            <div class="hint">Beginner</div>
         </div>
-</div>
-
-<!-- Permission request overlay (shown when explicit permission API exists) -->
-<div id="perm-screen" class="hidden">
-        <div id="perm-panel">
-                <p><strong>Enable motion controls</strong></p>
-                <p>The game uses device motion for tilt controls. Please allow motion access to continue.</p>
-                <div style="display:flex;gap:12px;justify-content:center;margin-top:12px;">
-                        <button id="perm-allow">Allow Motion</button>
-                </div>
-                <p style="font-size:12px;margin-top:8px;color:#ccc" class="notice">If you deny, you can still play with mouse or keyboard.</p>
+        <div class="maze-option" data-index="1" title="Medium">
+            <canvas class="preview" id="preview-1" width="120" height="120"></canvas>
+            <div class="difficulty">Medium</div>
+            <div class="hint">Challenging</div>
         </div>
+        <div class="maze-option" data-index="2" title="Hard">
+            <canvas class="preview" id="preview-2" width="120" height="120"></canvas>
+            <div class="difficulty">Hard</div>
+            <div class="hint">Expert</div>
+        </div>
+    </div>
 </div>
 
 <script>
@@ -174,18 +140,18 @@ let rows = 0, cols = 0, tileSize = 40, radius = 12;
 let startPos, goalPos, holeTiles = [];
 
 function findTile(ch){
-                for(let y=0;y<rows;y++) for(let x=0;x<cols;x++) if(MAZE[y][x]===ch) return {x,y};
+        for(let y=0;y<rows;y++) for(let x=0;x<cols;x++) if(MAZE[y][x]===ch) return {x,y};
 }
 function findAllTiles(ch){
-                const out=[];
-                for(let y=0;y<rows;y++) for(let x=0;x<cols;x++) if(MAZE[y][x]===ch) out.push({x,y});
-                return out;
+        const out=[];
+        for(let y=0;y<rows;y++) for(let x=0;x<cols;x++) if(MAZE[y][x]===ch) out.push({x,y});
+        return out;
 }
 
 /* Ball and state */
 let ball = {x:0,y:0,vx:0,vy:0,r:10};
 const state = {
-                running:false, trace:false, message:'', path:[], lastTime:null
+        running:false, trace:false, message:'', path:[], lastTime:null
 };
 
 /* Physics params */
@@ -202,316 +168,312 @@ const pointer = {down:false,startX:0,startY:0};
 let gravityX = 0, gravityY = 0;
 
 if (window.DeviceOrientationEvent) {
-                window.addEventListener("deviceorientation", e => {
-                                if (e.gamma == null || e.beta == null) return;
-                                gravityX = -e.beta / 45;
-                                gravityY =  e.gamma / 45;
-                });
+        window.addEventListener("deviceorientation", e => {
+                if (e.gamma == null || e.beta == null) return;
+                gravityX = -e.beta / 45;
+                gravityY =  e.gamma / 45;
+        });
 } else {
-                window.addEventListener("mousemove", e => {
-                                const rect = canvas.getBoundingClientRect();
-                                const cx = rect.left + rect.width/2;
-                                const cy = rect.top + rect.height/2;
-                                gravityX = (e.clientX - cx) / (rect.width/2);
-                                gravityY = (e.clientY - cy) / (rect.height/2);
-                });
+        window.addEventListener("mousemove", e => {
+                const rect = canvas.getBoundingClientRect();
+                const cx = rect.left + rect.width/2;
+                const cy = rect.top + rect.height/2;
+                gravityX = (e.clientX - cx) / (rect.width/2);
+                gravityY = (e.clientY - cy) / (rect.height/2);
+        });
 }
 
 /* ======= Preview rendering for start screen ======= */
 function drawPreviewToCanvas(pcan, maze){
-                const pctx = pcan.getContext('2d');
-                const w = pcan.width, h = pcan.height;
-                pctx.clearRect(0,0,w,h);
-                const r = maze.length, c = maze[0].length;
-                const ts = Math.min(w/c, h/r);
-                // background
-                pctx.fillStyle = "#e8d9bf";
-                pctx.fillRect(0,0,w,h);
-                for(let y=0;y<r;y++){
-                                for(let x=0;x<c;x++){
-                                                const px = x*ts + (w - ts*c)/2;
-                                                const py = y*ts + (h - ts*r)/2;
-                                                const t = maze[y][x];
-                                                if(t==='W'){
-                                                                pctx.fillStyle = '#6b4a2b';
-                                                                pctx.fillRect(px,py,ts,ts);
-                                                                pctx.fillStyle='#8f6237';
-                                                                pctx.fillRect(px+1,py+1,ts-2,ts-2);
-                                                } else {
-                                                                pctx.fillStyle='#f3ead7';
-                                                                pctx.fillRect(px,py,ts,ts);
-                                                }
-                                                if(t==='O'){
-                                                                pctx.fillStyle='#000';
-                                                                pctx.beginPath();
-                                                                pctx.arc(px+ts/2,py+ts/2,ts*0.22,0,Math.PI*2);
-                                                                pctx.fill();
-                                                }
-                                                if(t==='G'){
-                                                                pctx.fillStyle='#ffd07a';
-                                                                pctx.beginPath();
-                                                                pctx.arc(px+ts/2,py+ts/2,ts*0.22,0,Math.PI*2);
-                                                                pctx.fill();
-                                                                pctx.strokeStyle='#6b3d00'; pctx.lineWidth=1;
-                                                                pctx.stroke();
-                                                }
-                                                if(t==='S'){
-                                                                pctx.fillStyle='#2b7';
-                                                                pctx.beginPath();
-                                                                pctx.arc(px+ts/2,py+ts/2,ts*0.16,0,Math.PI*2);
-                                                                pctx.fill();
-                                                }
-                                }
+        const pctx = pcan.getContext('2d');
+        const w = pcan.width, h = pcan.height;
+        pctx.clearRect(0,0,w,h);
+        const r = maze.length, c = maze[0].length;
+        const ts = Math.min(w/c, h/r);
+        // background
+        pctx.fillStyle = "#e8d9bf";
+        pctx.fillRect(0,0,w,h);
+        for(let y=0;y<r;y++){
+                for(let x=0;x<c;x++){
+                        const px = x*ts + (w - ts*c)/2;
+                        const py = y*ts + (h - ts*r)/2;
+                        const t = maze[y][x];
+                        if(t==='W'){
+                                pctx.fillStyle = '#6b4a2b';
+                                pctx.fillRect(px,py,ts,ts);
+                                pctx.fillStyle='#8f6237';
+                                pctx.fillRect(px+1,py+1,ts-2,ts-2);
+                        } else {
+                                pctx.fillStyle='#f3ead7';
+                                pctx.fillRect(px,py,ts,ts);
+                        }
+                        if(t==='O'){
+                                pctx.fillStyle='#000';
+                                pctx.beginPath();
+                                pctx.arc(px+ts/2,py+ts/2,ts*0.22,0,Math.PI*2);
+                                pctx.fill();
+                        }
+                        if(t==='G'){
+                                pctx.fillStyle='#ffd07a';
+                                pctx.beginPath();
+                                pctx.arc(px+ts/2,py+ts/2,ts*0.22,0,Math.PI*2);
+                                pctx.fill();
+                                pctx.strokeStyle='#6b3d00'; pctx.lineWidth=1;
+                                pctx.stroke();
+                        }
+                        if(t==='S'){
+                                pctx.fillStyle='#2b7';
+                                pctx.beginPath();
+                                pctx.arc(px+ts/2,py+ts/2,ts*0.16,0,Math.PI*2);
+                                pctx.fill();
+                        }
                 }
+        }
 }
 
 /* Render previews now */
 for(let i=0;i<MAZES.length;i++){
-                const pcan = document.getElementById('preview-'+i);
-                drawPreviewToCanvas(pcan, MAZES[i]);
+        const pcan = document.getElementById('preview-'+i);
+        drawPreviewToCanvas(pcan, MAZES[i]);
 }
 
 /* ======= Drawing functions (use current MAZE) ======= */
 function draw(){
-                ctx.clearRect(0,0,canvas.width,canvas.height);
-                if(!MAZE) return;
-                for(let y=0;y<rows;y++){
-                                for(let x=0;x<cols;x++){
-                                                const px=x*tileSize, py=y*tileSize;
-                                                const t=MAZE[y][x];
-                                                if(t==='W'){
-                                                                ctx.fillStyle='#6b4a2b';
-                                                                ctx.fillRect(px,py,tileSize,tileSize);
-                                                                ctx.fillStyle='#8f6237';
-                                                                ctx.fillRect(px+2,py+2,tileSize-4,tileSize-4);
-                                                } else {
-                                                                ctx.fillStyle='#d9c7a6';
-                                                                ctx.fillRect(px,py,tileSize,tileSize);
-                                                }
-                                                if(t==='O') drawHole(px+tileSize/2, py+tileSize/2, tileSize*0.4);
-                                                if(t==='G') drawSpiral(px+tileSize/2, py+tileSize/2, tileSize*0.42);
-                                }
+        ctx.clearRect(0,0,canvas.width,canvas.height);
+        if(!MAZE) return;
+        for(let y=0;y<rows;y++){
+                for(let x=0;x<cols;x++){
+                        const px=x*tileSize, py=y*tileSize;
+                        const t=MAZE[y][x];
+                        if(t==='W'){
+                                ctx.fillStyle='#6b4a2b';
+                                ctx.fillRect(px,py,tileSize,tileSize);
+                                ctx.fillStyle='#8f6237';
+                                ctx.fillRect(px+2,py+2,tileSize-4,tileSize-4);
+                        } else {
+                                ctx.fillStyle='#d9c7a6';
+                                ctx.fillRect(px,py,tileSize,tileSize);
+                        }
+                        if(t==='O') drawHole(px+tileSize/2, py+tileSize/2, tileSize*0.4);
+                        if(t==='G') drawSpiral(px+tileSize/2, py+tileSize/2, tileSize*0.42);
                 }
+        }
 
-                if(state.trace && state.path.length>1){
-                                ctx.beginPath();
-                                ctx.strokeStyle='rgba(0,0,0,0.2)';
-                                ctx.lineWidth=2;
-                                ctx.moveTo(state.path[0].x,state.path[0].y);
-                                for(let p of state.path) ctx.lineTo(p.x,p.y);
-                                ctx.stroke();
-                }
+        if(state.trace && state.path.length>1){
+                ctx.beginPath();
+                ctx.strokeStyle='rgba(0,0,0,0.2)';
+                ctx.lineWidth=2;
+                ctx.moveTo(state.path[0].x,state.path[0].y);
+                for(let p of state.path) ctx.lineTo(p.x,p.y);
+                ctx.stroke();
+        }
 
-                drawBall();
+        drawBall();
 
-                document.getElementById("msg").textContent =
-                                state.message || "Use arrow keys, drag, or tilt. Reach the spiral. Avoid black holes.";
+        document.getElementById("msg").textContent =
+                state.message || "Use arrow keys, drag, or tilt. Reach the spiral. Avoid black holes.";
 }
 
 function drawBall(){
-                const g=ctx.createRadialGradient(
-                                ball.x-ball.r*0.3,
-                                ball.y-ball.r*0.3,
-                                ball.r*0.1,
-                                ball.x, ball.y, ball.r
-                );
-                g.addColorStop(0,'#fff');
-                g.addColorStop(0.2,'#dfe8f2');
-                g.addColorStop(1,'#7a7f85');
+        const g=ctx.createRadialGradient(
+                ball.x-ball.r*0.3,
+                ball.y-ball.r*0.3,
+                ball.r*0.1,
+                ball.x, ball.y, ball.r
+        );
+        g.addColorStop(0,'#fff');
+        g.addColorStop(0.2,'#dfe8f2');
+        g.addColorStop(1,'#7a7f85');
 
-                ctx.fillStyle=g;
-                ctx.beginPath();
-                ctx.arc(ball.x,ball.y,ball.r,0,Math.PI*2);
-                ctx.fill();
+        ctx.fillStyle=g;
+        ctx.beginPath();
+        ctx.arc(ball.x,ball.y,ball.r,0,Math.PI*2);
+        ctx.fill();
 
-                ctx.strokeStyle='rgba(255,255,255,0.15)';
-                ctx.lineWidth=1;
-                ctx.stroke();
+        ctx.strokeStyle='rgba(255,255,255,0.15)';
+        ctx.lineWidth=1;
+        ctx.stroke();
 }
 
 function drawHole(cx,cy,r){
-                const g=ctx.createRadialGradient(cx-r*0.2,cy-r*0.2,1,cx,cy,r);
-                g.addColorStop(0,'#111');
-                g.addColorStop(1,'#000');
-                ctx.fillStyle=g;
-                ctx.beginPath();
-                ctx.arc(cx,cy,r,0,Math.PI*2);
-                ctx.fill();
+        const g=ctx.createRadialGradient(cx-r*0.2,cy-r*0.2,1,cx,cy,r);
+        g.addColorStop(0,'#111');
+        g.addColorStop(1,'#000');
+        ctx.fillStyle=g;
+        ctx.beginPath();
+        ctx.arc(cx,cy,r,0,Math.PI*2);
+        ctx.fill();
 }
 
 function drawSpiral(cx,cy,r){
-                const grad=ctx.createLinearGradient(cx-r,cy-r,cx+r,cy+r);
-                grad.addColorStop(0,'#ffeaa7');
-                grad.addColorStop(1,'#ffd07a');
-                ctx.fillStyle=grad;
-                ctx.beginPath();
-                ctx.arc(cx,cy,r,0,Math.PI*2);
-                ctx.fill();
+        const grad=ctx.createLinearGradient(cx-r,cy-r,cx+r,cy+r);
+        grad.addColorStop(0,'#ffeaa7');
+        grad.addColorStop(1,'#ffd07a');
+        ctx.fillStyle=grad;
+        ctx.beginPath();
+        ctx.arc(cx,cy,r,0,Math.PI*2);
+        ctx.fill();
 
-                ctx.save();
-                ctx.translate(cx,cy);
-                ctx.strokeStyle='#6b3d00';
-                ctx.lineWidth=Math.max(2,r*0.08);
-                ctx.beginPath();
-                for(let i=0;i<120;i++){
-                                const t=i/120;
-                                const a=t*5*Math.PI*2 - Math.PI/2;
-                                const rad=r*(1 - t*0.9);
-                                const x=Math.cos(a)*rad;
-                                const y=Math.sin(a)*rad;
-                                if(i==0) ctx.moveTo(x,y);
-                                else ctx.lineTo(x,y);
-                }
-                ctx.stroke();
-                ctx.restore();
+        ctx.save();
+        ctx.translate(cx,cy);
+        ctx.strokeStyle='#6b3d00';
+        ctx.lineWidth=Math.max(2,r*0.08);
+        ctx.beginPath();
+        for(let i=0;i<120;i++){
+                const t=i/120;
+                const a=t*5*Math.PI*2 - Math.PI/2;
+                const rad=r*(1 - t*0.9);
+                const x=Math.cos(a)*rad;
+                const y=Math.sin(a)*rad;
+                if(i==0) ctx.moveTo(x,y);
+                else ctx.lineTo(x,y);
+        }
+        ctx.stroke();
+        ctx.restore();
 }
 
 /* ======= Physics and collisions ======= */
 function physics(dt){
-                let ax = -gravityX * accPower;
-                let ay = -gravityY * accPower;
+        let ax = -gravityX * accPower;
+        let ay = -gravityY * accPower;
 
-                if(keys.left)  ax -= accPower;
-                if(keys.right) ax += accPower;
-                if(keys.up)    ay -= accPower;
-                if(keys.down)  ay += accPower;
+        if(keys.left)  ax -= accPower;
+        if(keys.right) ax += accPower;
+        if(keys.up)    ay -= accPower;
+        if(keys.down)  ay += accPower;
 
-                ax += input.ax;
-                ay += input.ay;
+        ax += input.ax;
+        ay += input.ay;
 
-                ball.vx += ax * dt;
-                ball.vy += ay * dt;
+        ball.vx += ax * dt;
+        ball.vy += ay * dt;
 
-                const s = Math.hypot(ball.vx, ball.vy);
-                if(s > maxSpeed){
-                                const k = maxSpeed/s;
-                                ball.vx *= k;
-                                ball.vy *= k;
-                }
+        const s = Math.hypot(ball.vx, ball.vy);
+        if(s > maxSpeed){
+                const k = maxSpeed/s;
+                ball.vx *= k;
+                ball.vy *= k;
+        }
 
-                ball.vx *= Math.pow(friction, dt*60);
-                ball.vy *= Math.pow(friction, dt*60);
+        ball.vx *= Math.pow(friction, dt*60);
+        ball.vy *= Math.pow(friction, dt*60);
 
-                ball.x += ball.vx * dt;
-                ball.y += ball.vy * dt;
+        ball.x += ball.vx * dt;
+        ball.y += ball.vy * dt;
 
-                resolveWallCollisions();
+        resolveWallCollisions();
 
-                for(const h of holeTiles){
-                                const cx=(h.x+0.5)*tileSize, cy=(h.y+0.5)*tileSize;
-                                if(Math.hypot(ball.x-cx,ball.y-cy)<tileSize*0.35)
-                                                return lost();
-                }
+        for(const h of holeTiles){
+                const cx=(h.x+0.5)*tileSize, cy=(h.y+0.5)*tileSize;
+                if(Math.hypot(ball.x-cx,ball.y-cy)<tileSize*0.35)
+                        return lost();
+        }
 
-                const gx=(goalPos.x+0.5)*tileSize, gy=(goalPos.y+0.5)*tileSize;
-                if(Math.hypot(ball.x-gx,ball.y-gy)<tileSize*0.35)
-                                return win();
+        const gx=(goalPos.x+0.5)*tileSize, gy=(goalPos.y+0.5)*tileSize;
+        if(Math.hypot(ball.x-gx,ball.y-gy)<tileSize*0.35)
+                return win();
 
-                if(state.trace){
-                                if(state.path.length===0 ||
-                                                Math.hypot(ball.x-state.path.at(-1).x,ball.y-state.path.at(-1).y)>6)
-                                                state.path.push({x:ball.x,y:ball.y});
-                                if(state.path.length>800) state.path.shift();
-                }
+        if(state.trace){
+                if(state.path.length===0 ||
+                        Math.hypot(ball.x-state.path.at(-1).x,ball.y-state.path.at(-1).y)>6)
+                        state.path.push({x:ball.x,y:ball.y});
+                if(state.path.length>800) state.path.shift();
+        }
 }
 
 function resolveWallCollisions(){
-                const minX=Math.floor((ball.x-ball.r)/tileSize);
-                const maxX=Math.floor((ball.x+ball.r)/tileSize);
-                const minY=Math.floor((ball.y-ball.r)/tileSize);
-                const maxY=Math.floor((ball.y+ball.r)/tileSize);
+        const minX=Math.floor((ball.x-ball.r)/tileSize);
+        const maxX=Math.floor((ball.x+ball.r)/tileSize);
+        const minY=Math.floor((ball.y-ball.r)/tileSize);
+        const maxY=Math.floor((ball.y+ball.r)/tileSize);
 
-                for(let ty=minY;ty<=maxY;ty++){
-                                for(let tx=minX;tx<=maxX;tx++){
-                                                if(ty<0||ty>=rows||tx<0||tx>=cols) continue;
-                                                if(MAZE[ty][tx]!=='W') continue;
+        for(let ty=minY;ty<=maxY;ty++){
+                for(let tx=minX;tx<=maxX;tx++){
+                        if(ty<0||ty>=rows||tx<0||tx>=cols) continue;
+                        if(MAZE[ty][tx]!=='W') continue;
 
-                                                const rx=tx*tileSize, ry=ty*tileSize;
+                        const rx=tx*tileSize, ry=ty*tileSize;
 
-                                                const closestX=Math.max(rx, Math.min(ball.x, rx+tileSize));
-                                                const closestY=Math.max(ry, Math.min(ball.y, ry+tileSize));
+                        const closestX=Math.max(rx, Math.min(ball.x, rx+tileSize));
+                        const closestY=Math.max(ry, Math.min(ball.y, ry+tileSize));
 
-                                                const dx=ball.x-closestX;
-                                                const dy=ball.y-closestY;
-                                                const dist2=dx*dx+dy*dy;
+                        const dx=ball.x-closestX;
+                        const dy=ball.y-closestY;
+                        const dist2=dx*dx+dy*dy;
 
-                                                if(dist2 < ball.r*ball.r){
-                                                                const dist=Math.sqrt(dist2)||0.001;
-                                                                const overlap=ball.r-dist;
+                        if(dist2 < ball.r*ball.r){
+                                const dist=Math.sqrt(dist2)||0.001;
+                                const overlap=ball.r-dist;
 
-                                                                const nx=dx/dist, ny=dy/dist;
+                                const nx=dx/dist, ny=dy/dist;
 
-                                                                ball.x += nx*overlap;
-                                                                ball.y += ny*overlap;
+                                ball.x += nx*overlap;
+                                ball.y += ny*overlap;
 
-                                                                const vdot = ball.vx*nx + ball.vy*ny;
-                                                                ball.vx -= 1.6*vdot*nx;
-                                                                ball.vy -= 1.6*vdot*ny;
+                                const vdot = ball.vx*nx + ball.vy*ny;
+                                ball.vx -= 1.6*vdot*nx;
+                                ball.vy -= 1.6*vdot*ny;
 
-                                                                ball.vx *= 0.75;
-                                                                ball.vy *= 0.75;
-                                                }
-                                }
+                                ball.vx *= 0.75;
+                                ball.vy *= 0.75;
+                        }
                 }
+        }
 }
 
 /* ======= Game state handlers ======= */
 function resetBall(){
-                startPos = findTile('S');
-                goalPos = findTile('G');
-                holeTiles = findAllTiles('O');
-                ball.x=(startPos.x+0.5)*tileSize;
-                ball.y=(startPos.y+0.5)*tileSize;
-                ball.vx=0; ball.vy=0;
-                state.message='';
-                state.path=[];
+        startPos = findTile('S');
+        goalPos = findTile('G');
+        holeTiles = findAllTiles('O');
+        ball.x=(startPos.x+0.5)*tileSize;
+        ball.y=(startPos.y+0.5)*tileSize;
+        ball.vx=0; ball.vy=0;
+        state.message='';
+        state.path=[];
 }
 
 function lost(){
-                state.message='Fell into a hole! Restarting…';
-                setTimeout(()=> {
-                        resetBall();
-                        state.running = false;
-                        document.getElementById('start-screen').classList.remove('hidden');
-                },800);
+        state.message='Fell into a hole! Restarting…';
+        setTimeout(resetBall,800);
 }
 
 function win(){
-                state.message='You reached the spiral! Congratulations.';
-                ball.vx=ball.vy=0;
-                setTimeout(resetBall,1500);
+        state.message='You reached the spiral! Congratulations.';
+        ball.vx=ball.vy=0;
+        setTimeout(resetBall,1500);
 }
 
 /* ======= Input events (attached once) ======= */
 window.addEventListener('keydown', e=>{
-                if(e.key==="ArrowLeft"||e.key==="a"){ keys.left=true; e.preventDefault(); }
-                if(e.key==="ArrowRight"||e.key==="d"){ keys.right=true; e.preventDefault(); }
-                if(e.key==="ArrowUp"||e.key==="w"){ keys.up=true; e.preventDefault(); }
-                if(e.key==="ArrowDown"||e.key==="s"){ keys.down=true; e.preventDefault(); }
+        if(e.key==="ArrowLeft"||e.key==="a"){ keys.left=true; e.preventDefault(); }
+        if(e.key==="ArrowRight"||e.key==="d"){ keys.right=true; e.preventDefault(); }
+        if(e.key==="ArrowUp"||e.key==="w"){ keys.up=true; e.preventDefault(); }
+        if(e.key==="ArrowDown"||e.key==="s"){ keys.down=true; e.preventDefault(); }
 });
 window.addEventListener('keyup', e=>{
-                if(e.key==="ArrowLeft"||e.key==="a") keys.left=false;
-                if(e.key==="ArrowRight"||e.key==="d") keys.right=false;
-                if(e.key==="ArrowUp"||e.key==="w") keys.up=false;
-                if(e.key==="ArrowDown"||e.key==="s") keys.down=false;
+        if(e.key==="ArrowLeft"||e.key==="a") keys.left=false;
+        if(e.key==="ArrowRight"||e.key==="d") keys.right=false;
+        if(e.key==="ArrowUp"||e.key==="w") keys.up=false;
+        if(e.key==="ArrowDown"||e.key==="s") keys.down=false;
 });
 
 /* Pointer drag tilt */
 canvas.addEventListener('pointerdown', e=>{
-                pointer.down=true;
-                pointer.startX=e.clientX;
-                pointer.startY=e.clientY;
-                canvas.setPointerCapture(e.pointerId);
+        pointer.down=true;
+        pointer.startX=e.clientX;
+        pointer.startY=e.clientY;
+        canvas.setPointerCapture(e.pointerId);
 });
 canvas.addEventListener('pointermove', e=>{
-                if(!pointer.down) return;
-                input.ax=(e.clientX-pointer.startX)*12;
-                input.ay=(e.clientY-pointer.startY)*12;
+        if(!pointer.down) return;
+        input.ax=(e.clientX-pointer.startX)*12;
+        input.ay=(e.clientY-pointer.startY)*12;
 });
 canvas.addEventListener('pointerup', e=>{
-                pointer.down=false;
-                input.ax=input.ay=0;
-                canvas.releasePointerCapture?.(e.pointerId);
+        pointer.down=false;
+        input.ax=input.ay=0;
+        canvas.releasePointerCapture?.(e.pointerId);
 });
 
 /* UI buttons */
@@ -520,43 +482,43 @@ document.getElementById('toggle-trace').onclick = ()=>{ state.trace = !state.tra
 
 /* ======= Resize handling ======= */
 function adjustCanvas(){
-                const sz=Math.min(window.innerWidth-40,window.innerHeight-40,720);
-                canvas.width=sz;
-                canvas.height=sz;
-                if(!MAZE) return;
-                tileSize=Math.min(canvas.width/cols,canvas.height/rows);
-                radius=tileSize*0.35;
-                ball.r=radius;
+        const sz=Math.min(window.innerWidth-40,window.innerHeight-40,720);
+        canvas.width=sz;
+        canvas.height=sz;
+        if(!MAZE) return;
+        tileSize=Math.min(canvas.width/cols,canvas.height/rows);
+        radius=tileSize*0.35;
+        ball.r=radius;
 }
 window.addEventListener('resize', adjustCanvas);
 
 /* ======= Game loop ======= */
 function step(now){
-                if(!state.running) { state.lastTime = now; requestAnimationFrame(step); return; }
-                if(!state.lastTime) state.lastTime=now;
-                const dt=Math.min(0.03,(now-state.lastTime)/1000);
-                state.lastTime=now;
+        if(!state.running) { state.lastTime = now; requestAnimationFrame(step); return; }
+        if(!state.lastTime) state.lastTime=now;
+        const dt=Math.min(0.03,(now-state.lastTime)/1000);
+        state.lastTime=now;
 
-                physics(dt);
-                draw();
+        physics(dt);
+        draw();
 
-                requestAnimationFrame(step);
+        requestAnimationFrame(step);
 }
 
 /* ======= Start game with chosen maze ======= */
 function startGameWithMaze(maze){
-                MAZE = maze;
-                rows = MAZE.length;
-                cols = MAZE[0].length;
-                tileSize = Math.min(canvas.width/cols, canvas.height/rows);
-                radius = tileSize*0.35;
-                ball.r = radius;
-                resetBall();
-                state.running = true;
-                state.lastTime = null;
-                document.getElementById('start-screen').classList.add('hidden');
-                // ensure canvas size and tile sizes updated
-                adjustCanvas();
+        MAZE = maze;
+        rows = MAZE.length;
+        cols = MAZE[0].length;
+        tileSize = Math.min(canvas.width/cols, canvas.height/rows);
+        radius = tileSize*0.35;
+        ball.r = radius;
+        resetBall();
+        state.running = true;
+        state.lastTime = null;
+        document.getElementById('start-screen').classList.add('hidden');
+        // ensure canvas size and tile sizes updated
+        adjustCanvas();
 }
 
 /* Start main animation loop (it will wait until state.running is true) */
@@ -565,55 +527,23 @@ requestAnimationFrame(step);
 /* ======= Start screen selection logic ======= */
 const options = document.querySelectorAll('.maze-option');
 options.forEach(opt=>{
-                opt.addEventListener('click', ()=>{
-                                const idx = Number(opt.dataset.index);
-                                options.forEach(o=>o.classList.remove('selected'));
-                                opt.classList.add('selected');
-                                // small delay to show selection feedback, then start
-                                setTimeout(()=> startGameWithMaze(MAZES[idx]), 100);
-                });
-                opt.addEventListener('mouseenter', ()=> opt.classList.add('hover'));
-                opt.addEventListener('mouseleave', ()=> opt.classList.remove('hover'));
+        opt.addEventListener('click', ()=>{
+                const idx = Number(opt.dataset.index);
+                options.forEach(o=>o.classList.remove('selected'));
+                opt.classList.add('selected');
+                // small delay to show selection feedback, then start
+                setTimeout(()=> startGameWithMaze(MAZES[idx]), 100);
+        });
+        opt.addEventListener('mouseenter', ()=> opt.classList.add('hover'));
+        opt.addEventListener('mouseleave', ()=> opt.classList.remove('hover'));
 });
 
 /* Ensure previews are visible on small screens by re-drawing if needed */
-/* Also handle permission flow: show permission overlay if needed, otherwise show start-screen */
 window.addEventListener('load', ()=> {
-                for(let i=0;i<MAZES.length;i++){
-                                drawPreviewToCanvas(document.getElementById('preview-'+i), MAZES[i]);
-                }
-                adjustCanvas();
-
-                const permScreen = document.getElementById('perm-screen');
-                const startScreen = document.getElementById('start-screen');
-                const permButton = document.getElementById('perm-allow');
-
-                // If iOS-like permission API exists, show the permission panel first (user gesture required)
-                if (typeof DeviceOrientationEvent !== 'undefined' && typeof DeviceOrientationEvent.requestPermission === 'function') {
-                        permScreen.classList.remove('hidden');
-                        startScreen.classList.add('hidden');
-
-                        permButton.onclick = () => {
-                                DeviceOrientationEvent.requestPermission().then(result => {
-                                        if (result === 'granted') {
-                                                permScreen.classList.add('hidden');
-                                                startScreen.classList.remove('hidden');
-                                        } else {
-                                                // denied -> still let user continue (mouse/keys), inform them
-                                                permScreen.classList.add('hidden');
-                                                startScreen.classList.remove('hidden');
-                                        }
-                                }).catch(()=> {
-                                        // any error -> hide permission overlay and allow play via other inputs
-                                        permScreen.classList.add('hidden');
-                                        startScreen.classList.remove('hidden');
-                                });
-                        };
-                } else {
-                        // permission not required or unavailable -> show start screen immediately
-                        permScreen.classList.add('hidden');
-                        startScreen.classList.remove('hidden');
-                }
+        for(let i=0;i<MAZES.length;i++){
+                drawPreviewToCanvas(document.getElementById('preview-'+i), MAZES[i]);
+        }
+        adjustCanvas();
 });
 </script>
 </body>
