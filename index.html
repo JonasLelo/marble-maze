@@ -96,46 +96,46 @@ button{background:#333;color:#fff;border:none;padding:6px 10px;border-radius:6px
 /* ======= Maze definitions (three mazes) ======= */
 /* Easy (original) */
 const MAZE_EASY = [
-  "W W W W W W W W W W W",
- "W S . . W . . . O W W",
- "W . W . W W . . . W W",
- "W . W . . . . W W W W",
- "W O W W W . W . G W W",
- "W . . O W . W . W W W",
- "W W . W W . W . . W W",
- "W . . . . . W O . W W",
- "W W W W W W W W . W W",
- "W W W W W W W W W W W",
+   "W W W W W W W W W W W",
+ "W S . . . W . . . O W",
+ "W . W W . W . W . . W",
+ "W . . . . . . W . . W",
+ "W W W . W W . W . W W",
+ "W . . . . . . . . . W",
+ "W . W W W O W W . . W",
+ "W . . . . . . . W . W",
+ "W . W W W W . W W . W",
+ "W . . . . . . . . G W",
  "W W W W W W W W W W W"
 ].map(r=>r.split(' '));
 
 /* Medium (new layout) */
 const MAZE_MED = [
  "W W W W W W W W W W W",
- "W S . . W . . . O W W",
- "W . W . W W . . . W W",
- "W . W . . . . W W W W",
- "W O W W W . W . G W W",
- "W . . O W . W . W W W",
- "W W . W W . W . . W W",
- "W . . . . . W O . W W",
- "W W W W W W W W . W W",
- "W W W W W W W W W W W",
+ "W S . W . . W . O . W",
+ "W . . W . W W . W . W",
+ "W W . . . . . . W . W",
+ "W . W W W O W . W . W",
+ "W . . . . W . . . . W",
+ "W . W O W W W W W . W",
+ "W . W . . . . . . . W",
+ "W . W W W W . W W . W",
+ "W . . . O . . . . G W",
  "W W W W W W W W W W W"
 ].map(r=>r.split(' '));
 
 /* Hard (dense walls) */
 const MAZE_HARD = [
  "W W W W W W W W W W W",
- "W S . . W . . . O W W",
- "W . W . W W . . . W W",
- "W . W . . . . W W W W",
- "W O W W W . W . G W W",
- "W . . O W . W . W W W",
- "W W . W W . W . . W W",
- "W . . . . . W O . W W",
- "W W W W W W W W . W W",
- "W W W W W W W W W W W",
+ "W S . W . W . . O . W",
+ "W W . W . W . W W . W",
+ "W . . . . . . W . . W",
+ "W . W W W W . W . W W",
+ "W . W O . . . . . . W",
+ "W . W W W O W W W . W",
+ "W . . . . . . O W . W",
+ "W W W W W . W W W . W",
+ "W . . . O . . . . G W",
  "W W W W W W W W W W W"
 ].map(r=>r.split(' '));
 
