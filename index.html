@@ -521,6 +521,10 @@ function lost(){
 function win(){
                 state.message='You reached the spiral! Congratulations.';
                 ball.vx=ball.vy=0;
+                // Pause the game and reopen the start screen so player can choose a new map
+                state.running = false;
+                document.getElementById('start-screen').classList.remove('hidden');
+                document.querySelectorAll('.maze-option').forEach(o=>o.classList.remove('selected'));
                 setTimeout(resetBall,1500);
 }
 
