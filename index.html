@@ -679,7 +679,67 @@ enableBtn.addEventListener('click', ev=>{
         // this click is a user gesture and will allow requestPermission() on iOS
         requestMotionPermissionFromAPI().then(granted=>{
                 if(granted){
-                        // no further action needed; user may pick a maze now
+                                // enable motion and hide the enable button (same UX as the permission helper)
+                                motionAllowed = true;
+                                attachMotionListeners();
+                                enableBtn.classList.add('hidden');
+                                permHint.textContent = "Motion enabled. Choose a map to start.";
+
+                                // Add a short description for Expert Mode so players know what it does
+                                if(!document.getElementById('expert-desc')){
+                                                expertBtn.insertAdjacentHTML('afterend',
+                                                                '<div id="expert-desc" style="font-size:13px;color:#444;margin-top:6px;max-width:320px;text-align:center">' +
+                                                                'Expert mode: converts all walls into holes — a pure-hole, high-difficulty challenge.' +
+                                                                '</div>');
+                                }
+
+                                // Make the win feedback more prominent by wrapping the existing win() to show a big overlay
+                                if(typeof window.__wrappedWin === 'undefined'){
+                                                window.__wrappedWin = win; // preserve original
+                                                window.win = function(){
+                                                                // call original behavior (stops game, reopens start screen, sets message)
+                                                                window.__wrappedWin();
+
+                                                                // create overlay once
+                                                                let ov = document.getElementById('win-overlay');
+                                                                if(!ov){
+                                                                                ov = document.createElement('div');
+                                                                                ov.id = 'win-overlay';
+                                                                                ov.style.position = 'fixed';
+                                                                                ov.style.inset = '0';
+                                                                                ov.style.display = 'flex';
+                                                                                ov.style.alignItems = 'center';
+                                                                                ov.style.justifyContent = 'center';
+                                                                                ov.style.background = 'rgba(0,0,0,0.45)';
+                                                                                ov.style.zIndex = 2000;
+                                                                                ov.innerHTML = '<div id="win-panel" style="background:linear-gradient(#fff7e6,#fff1d1);padding:28px 36px;border-radius:12px;box-shadow:0 12px 40px rgba(0,0,0,0.5);text-align:center">' +
+                                                                                                           '<div id="win-text" style="font-size:28px;font-weight:800;color:#2b7;margin-bottom:6px">You reached the spiral!</div>' +
+                                                                                                           '<div id="win-sub" style="font-size:14px;color:#444">Congratulations.</div>' +
+                                                                                                           '</div>';
+                                                                                document.body.appendChild(ov);
+                                                                }
+
+                                                                // update texts (in case custom message)
+                                                                const wt = document.getElementById('win-text');
+                                                                const ws = document.getElementById('win-sub');
+                                                                if(wt) wt.textContent = state.message || 'You reached the spiral!';
+                                                                if(ws) ws.textContent = 'Great job — returning to map selection...';
+
+                                                                ov.style.opacity = '0';
+                                                                ov.style.transition = 'opacity .18s ease';
+                                                                ov.style.display = 'flex';
+                                                                requestAnimationFrame(()=> ov.style.opacity = '1');
+
+                                                                // hide after a short time
+                                                                setTimeout(()=> {
+                                                                                ov.style.opacity = '0';
+                                                                                setTimeout(()=> ov.style.display = 'none', 200);
+                                                                }, 1700);
+                                                };
+                                }
+                } else {
+                                // leave button visible so user can try again
+                }
                 } else {
                         // leave button visible so user can try again
                 }
