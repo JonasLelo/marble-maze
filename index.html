@@ -52,9 +52,6 @@ button{background:#333;color:#fff;border:none;padding:6px 10px;border-radius:6px
 .selected{outline:3px solid #2b7; box-shadow:0 8px 26px rgba(43,119,51,0.12)}
 #enable-motion{background:#1a73e8;padding:8px 12px;border-radius:8px;color:#fff;border:none;cursor:pointer}
 #permission-hint{font-size:13px;color:#444;margin-top:6px}
-
-/* expert toggle look (small) */
-#expert-mode.active{background:#b71c1c}
 </style>
 </head>
 <body>
@@ -73,7 +70,6 @@ button{background:#333;color:#fff;border:none;padding:6px 10px;border-radius:6px
         <div id="start-panel">
                 <div style="display:flex;align-items:center;gap:12px;">
                         <button id="enable-motion" class="hidden">Enable Motion</button>
-                        <button id="expert-mode">Expert Mode: OFF</button>
                         <div id="permission-hint">Motion permission is requested to allow tilt control. Grant it now if your device requires it.</div>
                 </div>
                 <div class="maze-row">
@@ -100,34 +96,36 @@ button{background:#333;color:#fff;border:none;padding:6px 10px;border-radius:6px
 /* ======= Maze definitions (three mazes) ======= */
 /* Easy (original) */
 const MAZE_EASY = [
- "W W W W W W W W W W W W",
-  "W S . . . . . . . . . W",
-  "W . W W W . W W W . . W",
-  "W . . . W . . . W . . W",
-  "W W W . W W W . W . O W",
-  "W . . . . . . . . . . W",
-  "W . W W W W W W W W . W",
-  "W . . . . . . O . . . W",
-  "W W W W W . W W W W . W",
-  "W . . . . . . . . . . W",
-  "W . W W W W W W W . G W",
-  "W W W W W W W W W W W W"
+"W W W W W W W W W W W W W",
+"W S . . . . . . . . . . O",
+"W . W W W . W W W W W . W",
+"W . . . W . W W W W . . W",
+"W W W . W . . . . O . W W",
+"W . . . W W W W . W . W W",
+"W . W W W O . . . W . . W",
+"W . . . . W . W W W O . W",
+"W O W W . W . W W W . . W",
+"W . . . . W . . . . . W W",
+"W . W W W W . W . W W W W",
+"W . . . . . . O . . . G W",
+"W W W W W W W W O W W W W"
 ].map(r=>r.split(' '));
 
 /* Medium (new layout) */
 const MAZE_MED = [
-  "W W W W W O W W W W W W W",
-  "W S . . W . . . . . . O W",
-  "W W W . W . W W W W . W W",
-  "W . . . . . . O . W . W W",
-  "W . W O W W . W . W . O W",
-  "W . . . . O . . . O . W W",
-  "W O W W . W O W . W . W W",
-  "W . . . . . . . . . . O W",
-  "W . W W O W W W W W . W W",
-  "W . . . . . . . . O . W W",
-  "W O W W W W W W . . G W W",
-  "W W W W W W W W W W W W W"
+"W W W W W O W W W W W W W",
+"W S . . W . . . . . . O W",
+"W W W . W . W W W W . W W",
+"O . . . . . . O W W . . W",
+"W . W O W W . W W W O . W",
+"W . . . . O . . . O . . W",
+"W O W W . W O W . W . O W",
+"W W W W . W W W . W . W W",
+"O . . . . . . . . . . O W",
+"W . W W O W W W O W O W W",
+"W . . . . O . . . O W W W",
+"W O W W . . . W . . . G W",
+"W W W W W W W W W W W W W"
 ].map(r=>r.split(' '));
 
 /* Hard (dense walls) */
@@ -190,10 +188,6 @@ let motionAllowed = false;
 let motionPermissionRequired = false;
 const enableBtn = document.getElementById('enable-motion');
 const permHint = document.getElementById('permission-hint');
-
-/* Expert mode flag and button */
-let expertMode = false;
-const expertBtn = document.getElementById('expert-mode');
 
 function attachMotionListeners(){
         // attach appropriate listeners for orientation or fallback to mouse
@@ -618,17 +612,7 @@ function startGameWithMaze(maze){
                         return;
                 }
 
-                // Use a copy so original MAZES remain unchanged.
-                let chosen = maze.map(r=>r.slice());
-                if(expertMode){
-                        for(let y=0;y<chosen.length;y++){
-                                for(let x=0;x<chosen[0].length;x++){
-                                        if(chosen[y][x]==='W') chosen[y][x]='O';
-                                }
-                        }
-                }
-
-                MAZE = chosen;
+                MAZE = maze;
                 rows = MAZE.length;
                 cols = MAZE[0].length;
                 tileSize = Math.min(canvas.width/cols, canvas.height/rows);
@@ -662,84 +646,12 @@ options.forEach(opt=>{
                 opt.addEventListener('mouseleave', ()=> opt.classList.remove('hover'));
 });
 
-/* Expert mode toggle handler */
-expertBtn.addEventListener('click', ()=>{
-        expertMode = !expertMode;
-        if(expertMode){
-                expertBtn.classList.add('active');
-                expertBtn.textContent = 'Expert Mode: ON';
-        } else {
-                expertBtn.classList.remove('active');
-                expertBtn.textContent = 'Expert Mode: OFF';
-        }
-});
-
 /* Enable motion button handler (user gesture) */
 enableBtn.addEventListener('click', ev=>{
         // this click is a user gesture and will allow requestPermission() on iOS
         requestMotionPermissionFromAPI().then(granted=>{
                 if(granted){
-                                // enable motion and hide the enable button (same UX as the permission helper)
-                                motionAllowed = true;
-                                attachMotionListeners();
-                                enableBtn.classList.add('hidden');
-                                permHint.textContent = "Motion enabled. Choose a map to start.";
-
-                                // Add a short description for Expert Mode so players know what it does
-                                if(!document.getElementById('expert-desc')){
-                                                expertBtn.insertAdjacentHTML('afterend',
-                                                                '<div id="expert-desc" style="font-size:13px;color:#444;margin-top:6px;max-width:320px;text-align:center">' +
-                                                                'Expert mode: converts all walls into holes — a pure-hole, high-difficulty challenge.' +
-                                                                '</div>');
-                                }
-
-                                // Make the win feedback more prominent by wrapping the existing win() to show a big overlay
-                                if(typeof window.__wrappedWin === 'undefined'){
-                                                window.__wrappedWin = win; // preserve original
-                                                window.win = function(){
-                                                                // call original behavior (stops game, reopens start screen, sets message)
-                                                                window.__wrappedWin();
-
-                                                                // create overlay once
-                                                                let ov = document.getElementById('win-overlay');
-                                                                if(!ov){
-                                                                                ov = document.createElement('div');
-                                                                                ov.id = 'win-overlay';
-                                                                                ov.style.position = 'fixed';
-                                                                                ov.style.inset = '0';
-                                                                                ov.style.display = 'flex';
-                                                                                ov.style.alignItems = 'center';
-                                                                                ov.style.justifyContent = 'center';
-                                                                                ov.style.background = 'rgba(0,0,0,0.45)';
-                                                                                ov.style.zIndex = 2000;
-                                                                                ov.innerHTML = '<div id="win-panel" style="background:linear-gradient(#fff7e6,#fff1d1);padding:28px 36px;border-radius:12px;box-shadow:0 12px 40px rgba(0,0,0,0.5);text-align:center">' +
-                                                                                                           '<div id="win-text" style="font-size:28px;font-weight:800;color:#2b7;margin-bottom:6px">You reached the spiral!</div>' +
-                                                                                                           '<div id="win-sub" style="font-size:14px;color:#444">Congratulations.</div>' +
-                                                                                                           '</div>';
-                                                                                document.body.appendChild(ov);
-                                                                }
-
-                                                                // update texts (in case custom message)
-                                                                const wt = document.getElementById('win-text');
-                                                                const ws = document.getElementById('win-sub');
-                                                                if(wt) wt.textContent = state.message || 'You reached the spiral!';
-                                                                if(ws) ws.textContent = 'Great job — returning to map selection...';
-
-                                                                ov.style.opacity = '0';
-                                                                ov.style.transition = 'opacity .18s ease';
-                                                                ov.style.display = 'flex';
-                                                                requestAnimationFrame(()=> ov.style.opacity = '1');
-
-                                                                // hide after a short time
-                                                                setTimeout(()=> {
-                                                                                ov.style.opacity = '0';
-                                                                                setTimeout(()=> ov.style.display = 'none', 200);
-                                                                }, 1700);
-                                                };
-                                }
-                } else {
-                                // leave button visible so user can try again
-                }
+                        // no further action needed; user may pick a maze now
                 } else {
                         // leave button visible so user can try again
                 }
@@ -772,3 +684,6 @@ window.addEventListener('load', ()=> {
 </script>
 </body>
 </html>
+
+
+
