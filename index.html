@@ -135,19 +135,19 @@ const MAZE_MED = [
 
 /* Hard (dense walls) */
 const MAZE_HARD = [
-"O O O O O O O O O O O O O",
-"O S . . O . . . . O O O O",
-"O O O . O . O O . . . . O",
-"O . . . . . O O O O O . O",
-"O . O O O O O . . . . . O",
-"O . O O . . . . O . O O O",
-"O . O . . O O O O . . . O",
-"O . . . O O . . . O O . O",
-"O O O O . . . O . . . . O",
-"O . . . . O O O O O O O O",
-"O . O O O . . . O . . . O",
-"O . . . . . O . . . O G O",
-"O O O O O O O O O O O O O"
+"W W W W W O W W W W W W W",
+"W S . . O . . . . O W W W",
+"W W W . W . W W . . . . O",
+"O . . . . . O W W W W . W",
+"W . W O O W W . . . . . W",
+"W . W O . . . . O . W O W",
+"W . W . . O W W O . . . W",
+"W . . . O O . . . O O . W",
+"W O W O . . . O . . . . W",
+"O . . . . W O W W W W O W",
+"W . W W O . . . O . . . O",
+"W . . . . . O . . . O G W",
+"W O W W W W W O W W W W W"
 ].map(r=>r.split(' '));
 
 const MAZES = [MAZE_EASY, MAZE_MED, MAZE_HARD];
