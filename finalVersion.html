@@ -2,431 +2,716 @@
 <html lang="en">
 <head>
 <meta charset="utf-8" />
+<title>Marble Maze — Choose Maze</title>
 <meta name="viewport" content="width=device-width,initial-scale=1" />
-<title>Marble Maze — Motion Controlled</title>
 <style>
-    :root{
-        --bg:#0b1221;
-        --play:#e9eef8;
-        --ball:#2b8cff;
-        --wall:#222;
-        --panel:#0f1724cc;
-        --text:#dfe7fb;
-        --accent:#ffd166;
-    }
-    html,body{height:100%;margin:0;background:var(--bg);color:var(--text);font-family:system-ui,-apple-system,Segoe UI,Roboto,Arial;}
-    .wrap{display:flex;flex-direction:column;height:100%;gap:12px;padding:12px;box-sizing:border-box;}
-    header{display:flex;align-items:center;gap:12px;}
-    h1{font-size:1.1rem;margin:0}
-    .controls{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
-    button{background:var(--panel);border:1px solid rgba(255,255,255,0.04);color:var(--text);padding:8px 10px;border-radius:8px;font-size:0.95rem}
-    button.primary{background:linear-gradient(180deg,var(--accent),#ffb74d);color:#062030;font-weight:700}
-    canvas{display:block;border-radius:10px;background:linear-gradient(180deg,#eaf2ff 0%, #dce9ff 100%);box-shadow:0 10px 30px rgba(0,0,0,0.6);width:100%;height:calc(100vh - 240px);max-height:680px}
-    .info{font-size:0.9rem;opacity:0.95}
-    .small{font-size:0.85rem;opacity:0.9}
-    .visually-hidden{position:absolute!important;height:1px;width:1px;overflow:hidden;clip:rect(1px,1px,1px,1px);white-space:nowrap;border:0;padding:0;margin:-1px}
-    footer{display:flex;justify-content:space-between;align-items:center;gap:12px}
-    .status{font-size:0.9rem}
-    .row{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
-    label{display:inline-flex;align-items:center;gap:6px}
-    input[type=range]{width:120px}
+html,body{height:100%;margin:0;background:#efe7d6;display:flex;align-items:center;justify-content:center;font-family:system-ui,Segoe UI,Roboto}
+#game{position:relative}
+canvas{background:linear-gradient(#c7a77a,#b88950);display:block;border:6px solid #5b3a21;box-shadow:0 8px 24px rgba(0,0,0,.35)}
+#ui{position:absolute;left:8px;top:8px;color:#fff;display:flex;gap:8px}
+button{background:#333;color:#fff;border:none;padding:6px 10px;border-radius:6px;cursor:pointer}
+#msg{position:absolute;right:8px;top:8px;background:rgba(0,0,0,.6);color:#fff;padding:8px 12px;border-radius:6px}
+#legend{position:absolute;left:8px;bottom:8px;background:rgba(0,0,0,.6);color:#fff;padding:6px 10px;border-radius:6px;font-size:13px}
+
+/* START SCREEN */
+#start-screen{
+        position:fixed;
+        inset:0;
+        display:flex;
+        align-items:center;
+        justify-content:center;
+        background:linear-gradient(rgba(0,0,0,0.45),rgba(0,0,0,0.45));
+        z-index:1000;
+}
+#start-panel{
+        background:#fff;
+        padding:20px;
+        border-radius:12px;
+        box-shadow:0 10px 40px rgba(0,0,0,0.5);
+        display:flex;
+        gap:16px;
+        align-items:center;
+        flex-direction:column;
+}
+.maze-row{display:flex;gap:16px}
+.maze-option{
+        width:150px;
+        text-align:center;
+        cursor:pointer;
+        border-radius:8px;
+        padding:8px;
+        transition:transform .15s, box-shadow .15s;
+        background:#f7f2e8;
+        box-shadow:0 6px 14px rgba(0,0,0,0.15);
+}
+.maze-option:hover{transform:translateY(-6px); box-shadow:0 14px 30px rgba(0,0,0,0.2);}
+.preview{width:120px;height:120px;border:1px solid #ccc;background:#eadac7;margin:4px auto;display:block}
+.difficulty{font-weight:700;margin-top:6px}
+.hint{font-size:13px;color:#444;margin-top:6px}
+#start-screen.hidden, .hidden{display:none}
+.selected{outline:3px solid #2b7; box-shadow:0 8px 26px rgba(43,119,51,0.12)}
+#enable-motion{background:#1a73e8;padding:8px 12px;border-radius:8px;color:#fff;border:none;cursor:pointer}
+#permission-hint{font-size:13px;color:#444;margin-top:6px}
+
+/* expert toggle look (small) */
+#expert-mode.active{background:#b71c1c}
 </style>
 </head>
 <body>
-<div class="wrap">
-    <header>
-        <h1>Marble Maze — Motion Controlled</h1>
-        <div class="controls">
-            <button id="permissionBtn">Enable Motion</button>
-            <button id="resetBtn">Reset Ball</button>
-            <button id="soundToggle">Audio: Off</button>
-            <button id="vibrateToggle">Vibrate: Off</button>
+<div id="game">
+                <canvas id="c" width="720" height="720"></canvas>
+                <div id="ui">
+                                <button id="restart">Restart</button>
+                                <button id="toggle-trace">Toggle Trace</button>
+                </div>
+                <div id="msg">Use arrow keys, drag, or tilt. Reach the spiral. Avoid black holes.</div>
+                <div id="legend">Holes = black • Goal = spiral</div>
+</div>
+
+<!-- Start screen overlay -->
+<div id="start-screen">
+        <div id="start-panel">
+                <div style="display:flex;align-items:center;gap:12px;">
+                        <button id="enable-motion" class="hidden">Enable Motion</button>
+                        <button id="expert-mode">Expert Mode: OFF</button>
+                        <div id="permission-hint">Motion permission is requested to allow tilt control. Grant it now if your device requires it.</div>
+                </div>
+                <div class="maze-row">
+                        <div class="maze-option" data-index="0" title="Easy">
+                                <canvas class="preview" id="preview-0" width="120" height="120"></canvas>
+                                <div class="difficulty">Easy</div>
+                                <div class="hint">Beginner</div>
+                        </div>
+                        <div class="maze-option" data-index="1" title="Medium">
+                                <canvas class="preview" id="preview-1" width="120" height="120"></canvas>
+                                <div class="difficulty">Medium</div>
+                                <div class="hint">Challenging</div>
+                        </div>
+                        <div class="maze-option" data-index="2" title="Hard">
+                                <canvas class="preview" id="preview-2" width="120" height="120"></canvas>
+                                <div class="difficulty">Hard</div>
+                                <div class="hint">Expert</div>
+                        </div>
+                </div>
         </div>
-    </header>
-
-    <canvas id="playArea" role="img" aria-label="Play area with a single ball" tabindex="0"></canvas>
-
-    <div class="info" id="textDescription">
-        <strong>Concept (accessible):</strong>
-        This digital marble simulates a small wooden box with a metal ball. Tilt your phone forward/back (beta) and left/right (gamma).
-        The ball rolls in that direction, accelerates gradually, slows with friction when flat, and bounces softly on walls.
-        Use the "Enable Motion" button on iOS devices to allow orientation access. Arrow keys also tilt the surface as a fallback.
-    </div>
-
-    <div class="row small">
-        <label>Gravity scale<input id="gScale" type="range" min="0.5" max="6" step="0.1" value="2.0"></label>
-        <label>Friction<input id="drag" type="range" min="0" max="3" step="0.05" value="1.2"></label>
-        <label>Bounce<input id="restitution" type="range" min="0" max="1" step="0.05" value="0.65"></label>
-    </div>
-
-    <div aria-live="polite" id="live" class="visually-hidden"></div>
-
-    <footer>
-        <div class="status" id="status">Tilt: β=0°, γ=0° • Ball: x=0 y=0</div>
-        <div class="small">Controls: Motion sensors or Arrow keys. Tap "Enable Motion" on iOS to grant permission.</div>
-    </footer>
 </div>
 
 <script>
-/* Marble Maze — single-file playable demo
-     Features:
-     - DeviceOrientation (beta: forward/back, gamma: left/right)
-     - Physics: acceleration from tilt, velocity, drag (friction), soft wall bounce
-     - Accessibility: descriptive text, live region updates, optional speech & vibration
-     - Fallback: keyboard arrow keys simulate tilt
-*/
+/* ======= Maze definitions (three mazes) ======= */
+/* Easy (original) */
+const MAZE_EASY = [
+"W W W W W W W W W W W W W",
+"W S . . . . . . . . . . O",
+"W . W W W . W W W W W . W",
+"W . . . W . W W W W . . W",
+"W W W . W . . . . O . W W",
+"W . . . W W W W . W . W W",
+"W . W W W O . . . W . . W",
+"W . . . . W . W W W O . W",
+"W O W W . W . W W W . . W",
+"W . . . . W . . . . . W W",
+"W . W W W W . W . W W W W",
+"W . . . . . . O . . . G W",
+"W W W W W W W W O W W W W"
 
-// Canvas & sizing
-const canvas = document.getElementById('playArea');
-const ctx = canvas.getContext('2d');
-function resize(){
-    const rect = canvas.getBoundingClientRect();
-    const ratio = window.devicePixelRatio || 1;
-    canvas.width = Math.floor(canvas.clientWidth * ratio);
-    canvas.height = Math.floor(canvas.clientHeight * ratio);
-    ctx.setTransform(ratio,0,0,ratio,0,0);
-    // redraw occurs in main loop
+].map(r=>r.split(' '));
+
+/* Medium (new layout) */
+const MAZE_MED = [
+"W W W W W O W W W W W W W",
+"W S . . W . . . . . . O W",
+"W W W . W . W W W W . W W",
+"O . . . . . . O W W . . W",
+"W . W O W W . W W W O . W",
+"W . . . . O . . . O . . W",
+"W O W W . W O W . W . O W",
+"W W W W . W W W . W . W W",
+"O . . . . . . . . . . O W",
+"W . W W O W W W O W O W W",
+"W . . . . O . . . O W W W",
+"W O W W . . . W . . . G W",
+"W W W W W W W W W W W W W"
+].map(r=>r.split(' '));
+
+/* Hard (dense walls) */
+const MAZE_HARD = [
+"W W W W W O W W W W W W W",
+"W S . . O . . . . O W W W",
+"W W W . W . W W . . . . O",
+"O . . . . . O O O W W . W",
+"W . W O O W W . . . . . W",
+"W . W O . . . . O . W O W",
+"W . W . . O W W O . . . O",
+"W . . . O O . . . O O . W",
+"W O W O . . . O . . . . W",
+"O . . . . O O W W O W O W",
+"W . W W O . . . O . . . O",
+"W . . . . . O . . . O G W",
+"W O W W W W W O W W W W W"
+].map(r=>r.split(' '));
+
+const MAZES = [MAZE_EASY, MAZE_MED, MAZE_HARD];
+
+/* ======= Core game variables (will be initialized per selection) ======= */
+let MAZE = null; // will be set to chosen maze array
+let canvas = document.getElementById('c');
+let ctx = canvas.getContext('2d');
+
+let rows = 0, cols = 0, tileSize = 40, radius = 12;
+let startPos, goalPos, holeTiles = [];
+
+function findTile(ch){
+                for(let y=0;y<rows;y++) for(let x=0;x<cols;x++) if(MAZE[y][x]===ch) return {x,y};
 }
-window.addEventListener('resize', resize);
-resize();
+function findAllTiles(ch){
+                const out=[];
+                for(let y=0;y<rows;y++) for(let x=0;x<cols;x++) if(MAZE[y][x]===ch) out.push({x,y});
+                return out;
+}
 
-// Simulation parameters
-let ball = { x: 0, y: 0, r: 14, vx: 0, vy: 0 };
-let floor = { left: 8, top: 8, right: null, bottom: null }; // set after sizing
-const settings = {
-    gScale: parseFloat(document.getElementById('gScale').value), // multiplier
-    drag: parseFloat(document.getElementById('drag').value),      // linear drag per second
-    restitution: parseFloat(document.getElementById('restitution').value), // bounce energy
+/* Ball and state */
+let ball = {x:0,y:0,vx:0,vy:0,r:10};
+const state = {
+                running:false, trace:false, message:'', path:[], lastTime:null
 };
-const liveRegion = document.getElementById('live');
-const status = document.getElementById('status');
 
-function setBounds(){
-    const pad = 8;
-    floor.left = pad;
-    floor.top = pad;
-    floor.right = canvas.clientWidth - pad;
-    floor.bottom = canvas.clientHeight - pad;
-    // ensure ball inside
-    ball.x = Math.max(floor.left + ball.r, Math.min(ball.x || (canvas.clientWidth/2), floor.right - ball.r));
-    ball.y = Math.max(floor.top + ball.r, Math.min(ball.y || (canvas.clientHeight/2), floor.bottom - ball.r));
-}
-setBounds();
+/* Physics params */
+const friction = 0.98;
+const maxSpeed = 800;
+const accPower = 1800;
 
-// initial ball center
-if(!ball.x) ball.x = canvas.clientWidth/2;
-if(!ball.y) ball.y = canvas.clientHeight/2;
+/* Input */
+let input = {ax:0, ay:0};
+const keys = {left:false,right:false,up:false,down:false};
+const pointer = {down:false,startX:0,startY:0};
 
-// Inputs
-let beta = 0;  // forward/back: positive pulls down (increase y)
-let gamma = 0; // left/right: positive pulls right (increase x)
-let useDevice = false;
+/* Gravity / tilt (axes swapped as requested) */
+let gravityX = 0, gravityY = 0;
 
-const permissionBtn = document.getElementById('permissionBtn');
-permissionBtn.addEventListener('click', async () => {
-    // iOS 13+ requires permission via DeviceOrientationEvent.requestPermission
-    if (typeof DeviceOrientationEvent !== 'undefined' && typeof DeviceOrientationEvent.requestPermission === 'function') {
-        try {
-            const res = await DeviceOrientationEvent.requestPermission();
-            if (res === 'granted') {
-                window.addEventListener('deviceorientation', handleOrientation);
-                useDevice = true;
-                permissionBtn.textContent = 'Motion Enabled';
-                permissionBtn.disabled = true;
-            } else {
-                permissionBtn.textContent = 'Permission Denied';
-            }
-        } catch (e) {
-            permissionBtn.textContent = 'Error';
-            console.error(e);
+/* Motion permission management */
+let motionAllowed = false;
+let motionPermissionRequired = false;
+const enableBtn = document.getElementById('enable-motion');
+const permHint = document.getElementById('permission-hint');
+
+/* Expert mode flag and button */
+let expertMode = false;
+const expertBtn = document.getElementById('expert-mode');
+
+function attachMotionListeners(){
+        // attach appropriate listeners for orientation or fallback to mouse
+        if (window.DeviceOrientationEvent && typeof window.DeviceOrientationEvent !== 'undefined') {
+                window.addEventListener("deviceorientation", e => {
+                                if (e.gamma == null || e.beta == null) return;
+                                gravityX = -e.beta / 45;
+                                gravityY =  e.gamma / 45;
+                });
+        } else {
+                window.addEventListener("mousemove", e => {
+                                const rect = canvas.getBoundingClientRect();
+                                const cx = rect.left + rect.width/2;
+                                const cy = rect.top + rect.height/2;
+                                gravityX = (e.clientX - cx) / (rect.width/2);
+                                gravityY = (e.clientY - cy) / (rect.height/2);
+                });
         }
-    } else {
-        // Non iOS: just start listening
-        window.addEventListener('deviceorientation', handleOrientation);
-        useDevice = true;
-        permissionBtn.textContent = 'Motion Enabled';
-        permissionBtn.disabled = true;
-    }
-});
-
-// Orientation handler
-function handleOrientation(e){
-    // Some browsers provide null values until stable; guard
-    if (e.beta == null || e.gamma == null) return;
-    // beta: -180..180 (forward/back), gamma: -90..90 (left/right)
-    beta = clamp(e.beta, -45, 45);  // limit to reasonable range for control
-    gamma = clamp(e.gamma, -45, 45);
-}
-function clamp(v,a,b){ return Math.max(a,Math.min(b,v)); }
-
-// Keyboard fallback: arrow keys tilt the surface while pressed
-const keyTilt = { up:false, down:false, left:false, right:false };
-window.addEventListener('keydown', (e)=>{
-    if (e.key === 'ArrowUp') keyTilt.up = true;
-    if (e.key === 'ArrowDown') keyTilt.down = true;
-    if (e.key === 'ArrowLeft') keyTilt.left = true;
-    if (e.key === 'ArrowRight') keyTilt.right = true;
-    if (!useDevice) updateFromKeys();
-});
-window.addEventListener('keyup', (e)=>{
-    if (e.key === 'ArrowUp') keyTilt.up = false;
-    if (e.key === 'ArrowDown') keyTilt.down = false;
-    if (e.key === 'ArrowLeft') keyTilt.left = false;
-    if (e.key === 'ArrowRight') keyTilt.right = false;
-    if (!useDevice) updateFromKeys();
-});
-function updateFromKeys(){
-    const step = 20; // degrees of tilt when fully pressed
-    beta = (keyTilt.down ? step : 0) + (keyTilt.up ? -step : 0);
-    gamma = (keyTilt.right ? step : 0) + (keyTilt.left ? -step : 0);
 }
 
-// UI bindings
-document.getElementById('gScale').addEventListener('input', (e)=> settings.gScale = parseFloat(e.target.value));
-document.getElementById('drag').addEventListener('input', (e)=> settings.drag = parseFloat(e.target.value));
-document.getElementById('restitution').addEventListener('input', (e)=> settings.restitution = parseFloat(e.target.value));
-document.getElementById('resetBtn').addEventListener('click', resetBall);
+function requestMotionPermissionFromAPI(){
+        // Returns a Promise that resolves true if permission granted (or not needed), false otherwise
+        return new Promise((resolve) => {
+                // If API requires explicit permission (iOS 13+), request it.
+                const needDevMotion = (typeof DeviceMotionEvent !== 'undefined' && typeof DeviceMotionEvent.requestPermission === 'function');
+                const needDevOrient = (typeof DeviceOrientationEvent !== 'undefined' && typeof DeviceOrientationEvent.requestPermission === 'function');
 
-// Audio & vibration toggles
-let audioOn = false, vibrateOn = false;
-const soundToggle = document.getElementById('soundToggle');
-const vibrateToggle = document.getElementById('vibrateToggle');
+                if(needDevMotion){
+                        DeviceMotionEvent.requestPermission().then(response=>{
+                                if(response === 'granted'){
+                                        motionAllowed = true;
+                                        attachMotionListeners();
+                                        enableBtn.classList.add('hidden');
+                                        permHint.textContent = "Motion enabled. Choose a map to start.";
+                                        resolve(true);
+                                } else {
+                                        permHint.textContent = "Motion permission denied. You can still play with keyboard/mouse.";
+                                        resolve(false);
+                                }
+                        }).catch(err=>{
+                                permHint.textContent = "Motion permission request failed.";
+                                resolve(false);
+                        });
+                        return;
+                }
 
-soundToggle.addEventListener('click', ()=>{ audioOn = !audioOn; soundToggle.textContent = 'Audio: ' + (audioOn ? 'On' : 'Off'); });
-vibrateToggle.addEventListener('click', ()=>{ vibrateOn = !vibrateOn; vibrateToggle.textContent = 'Vibrate: ' + (vibrateOn ? 'On' : 'Off'); });
+                if(needDevOrient){
+                        DeviceOrientationEvent.requestPermission().then(response=>{
+                                if(response === 'granted'){
+                                        motionAllowed = true;
+                                        attachMotionListeners();
+                                        enableBtn.classList.add('hidden');
+                                        permHint.textContent = "Motion enabled. Choose a map to start.";
+                                        resolve(true);
+                                } else {
+                                        permHint.textContent = "Motion permission denied. You can still play with keyboard/mouse.";
+                                        resolve(false);
+                                }
+                        }).catch(err=>{
+                                permHint.textContent = "Motion permission request failed.";
+                                resolve(false);
+                        });
+                        return;
+                }
 
-// Simple collision sound using WebAudio
-let audioCtx = null;
-function hitSound(volume=0.3){
-    if(!audioOn) return;
-    if(!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-    const o = audioCtx.createOscillator();
-    const g = audioCtx.createGain();
-    o.type = 'sine';
-    o.frequency.setValueAtTime(220, audioCtx.currentTime);
-    g.gain.setValueAtTime(volume, audioCtx.currentTime);
-    o.connect(g); g.connect(audioCtx.destination);
-    o.start();
-    g.gain.exponentialRampToValueAtTime(0.0001, audioCtx.currentTime + 0.15);
-    o.stop(audioCtx.currentTime + 0.16);
+                // No explicit permission required in this browser
+                motionAllowed = true;
+                attachMotionListeners();
+                enableBtn.classList.add('hidden');
+                permHint.textContent = "Motion available (no permission required). Choose a map to start.";
+                resolve(true);
+        });
 }
 
-// Reset function
+/* ======= Preview rendering for start screen ======= */
+function drawPreviewToCanvas(pcan, maze){
+                const pctx = pcan.getContext('2d');
+                const w = pcan.width, h = pcan.height;
+                pctx.clearRect(0,0,w,h);
+                const r = maze.length, c = maze[0].length;
+                const ts = Math.min(w/c, h/r);
+                // background
+                pctx.fillStyle = "#e8d9bf";
+                pctx.fillRect(0,0,w,h);
+                for(let y=0;y<r;y++){
+                                for(let x=0;x<c;x++){
+                                                const px = x*ts + (w - ts*c)/2;
+                                                const py = y*ts + (h - ts*r)/2;
+                                                const t = maze[y][x];
+                                                if(t==='W'){
+                                                                pctx.fillStyle = '#6b4a2b';
+                                                                pctx.fillRect(px,py,ts,ts);
+                                                                pctx.fillStyle='#8f6237';
+                                                                pctx.fillRect(px+1,py+1,ts-2,ts-2);
+                                                } else {
+                                                                pctx.fillStyle='#f3ead7';
+                                                                pctx.fillRect(px,py,ts,ts);
+                                                }
+                                                if(t==='O'){
+                                                                pctx.fillStyle='#000';
+                                                                pctx.beginPath();
+                                                                pctx.arc(px+ts/2,py+ts/2,ts*0.22,0,Math.PI*2);
+                                                                pctx.fill();
+                                                }
+                                                if(t==='G'){
+                                                                pctx.fillStyle='#ffd07a';
+                                                                pctx.beginPath();
+                                                                pctx.arc(px+ts/2,py+ts/2,ts*0.22,0,Math.PI*2);
+                                                                pctx.fill();
+                                                                pctx.strokeStyle='#6b3d00'; pctx.lineWidth=1;
+                                                                pctx.stroke();
+                                                }
+                                                if(t==='S'){
+                                                                pctx.fillStyle='#2b7';
+                                                                pctx.beginPath();
+                                                                pctx.arc(px+ts/2,py+ts/2,ts*0.16,0,Math.PI*2);
+                                                                pctx.fill();
+                                                }
+                                }
+                }
+}
+
+/* Render previews now */
+for(let i=0;i<MAZES.length;i++){
+                const pcan = document.getElementById('preview-'+i);
+                drawPreviewToCanvas(pcan, MAZES[i]);
+}
+
+/* ======= Drawing functions (use current MAZE) ======= */
+function draw(){
+                ctx.clearRect(0,0,canvas.width,canvas.height);
+                if(!MAZE) return;
+                for(let y=0;y<rows;y++){
+                                for(let x=0;x<cols;x++){
+                                                const px=x*tileSize, py=y*tileSize;
+                                                const t=MAZE[y][x];
+                                                if(t==='W'){
+                                                                ctx.fillStyle='#6b4a2b';
+                                                                ctx.fillRect(px,py,tileSize,tileSize);
+                                                                ctx.fillStyle='#8f6237';
+                                                                ctx.fillRect(px+2,py+2,tileSize-4,tileSize-4);
+                                                } else {
+                                                                ctx.fillStyle='#d9c7a6';
+                                                                ctx.fillRect(px,py,tileSize,tileSize);
+                                                }
+                                                if(t==='O') drawHole(px+tileSize/2, py+tileSize/2, tileSize*0.4);
+                                                if(t==='G') drawSpiral(px+tileSize/2, py+tileSize/2, tileSize*0.42);
+                                }
+                }
+
+                if(state.trace && state.path.length>1){
+                                ctx.beginPath();
+                                ctx.strokeStyle='rgba(0,0,0,0.2)';
+                                ctx.lineWidth=2;
+                                ctx.moveTo(state.path[0].x,state.path[0].y);
+                                for(let p of state.path) ctx.lineTo(p.x,p.y);
+                                ctx.stroke();
+                }
+
+                drawBall();
+
+                document.getElementById("msg").textContent =
+                                state.message || "Use arrow keys, drag, or tilt. Reach the spiral. Avoid black holes.";
+}
+
+function drawBall(){
+                const g=ctx.createRadialGradient(
+                                ball.x-ball.r*0.3,
+                                ball.y-ball.r*0.3,
+                                ball.r*0.1,
+                                ball.x, ball.y, ball.r
+                );
+                g.addColorStop(0,'#fff');
+                g.addColorStop(0.2,'#dfe8f2');
+                g.addColorStop(1,'#7a7f85');
+
+                ctx.fillStyle=g;
+                ctx.beginPath();
+                ctx.arc(ball.x,ball.y,ball.r,0,Math.PI*2);
+                ctx.fill();
+
+                ctx.strokeStyle='rgba(255,255,255,0.15)';
+                ctx.lineWidth=1;
+                ctx.stroke();
+}
+
+function drawHole(cx,cy,r){
+                const g=ctx.createRadialGradient(cx-r*0.2,cy-r*0.2,1,cx,cy,r);
+                g.addColorStop(0,'#111');
+                g.addColorStop(1,'#000');
+                ctx.fillStyle=g;
+                ctx.beginPath();
+                ctx.arc(cx,cy,r,0,Math.PI*2);
+                ctx.fill();
+}
+
+function drawSpiral(cx,cy,r){
+                const grad=ctx.createLinearGradient(cx-r,cy-r,cx+r,cy+r);
+                grad.addColorStop(0,'#ffeaa7');
+                grad.addColorStop(1,'#ffd07a');
+                ctx.fillStyle=grad;
+                ctx.beginPath();
+                ctx.arc(cx,cy,r,0,Math.PI*2);
+                ctx.fill();
+
+                ctx.save();
+                ctx.translate(cx,cy);
+                ctx.strokeStyle='#6b3d00';
+                ctx.lineWidth=Math.max(2,r*0.08);
+                ctx.beginPath();
+                for(let i=0;i<120;i++){
+                                const t=i/120;
+                                const a=t*5*Math.PI*2 - Math.PI/2;
+                                const rad=r*(1 - t*0.9);
+                                const x=Math.cos(a)*rad;
+                                const y=Math.sin(a)*rad;
+                                if(i==0) ctx.moveTo(x,y);
+                                else ctx.lineTo(x,y);
+                }
+                ctx.stroke();
+                ctx.restore();
+}
+
+/* ======= Physics and collisions ======= */
+function physics(dt){
+                let ax = -gravityX * accPower;
+                let ay = -gravityY * accPower;
+
+                if(keys.left)  ax -= accPower;
+                if(keys.right) ax += accPower;
+                if(keys.up)    ay -= accPower;
+                if(keys.down)  ay += accPower;
+
+                ax += input.ax;
+                ay += input.ay;
+
+                ball.vx += ax * dt;
+                ball.vy += ay * dt;
+
+                const s = Math.hypot(ball.vx, ball.vy);
+                if(s > maxSpeed){
+                                const k = maxSpeed/s;
+                                ball.vx *= k;
+                                ball.vy *= k;
+                }
+
+                ball.vx *= Math.pow(friction, dt*60);
+                ball.vy *= Math.pow(friction, dt*60);
+
+                ball.x += ball.vx * dt;
+                ball.y += ball.vy * dt;
+
+                resolveWallCollisions();
+
+                for(const h of holeTiles){
+                                const cx=(h.x+0.5)*tileSize, cy=(h.y+0.5)*tileSize;
+                                if(Math.hypot(ball.x-cx,ball.y-cy)<tileSize*0.35)
+                                                return lost();
+                }
+
+                const gx=(goalPos.x+0.5)*tileSize, gy=(goalPos.y+0.5)*tileSize;
+                if(Math.hypot(ball.x-gx,ball.y-gy)<tileSize*0.35)
+                                return win();
+
+                if(state.trace){
+                                if(state.path.length===0 ||
+                                                Math.hypot(ball.x-state.path.at(-1).x,ball.y-state.path.at(-1).y)>6)
+                                                state.path.push({x:ball.x,y:ball.y});
+                                if(state.path.length>800) state.path.shift();
+                }
+}
+
+function resolveWallCollisions(){
+                const minX=Math.floor((ball.x-ball.r)/tileSize);
+                const maxX=Math.floor((ball.x+ball.r)/tileSize);
+                const minY=Math.floor((ball.y-ball.r)/tileSize);
+                const maxY=Math.floor((ball.y+ball.r)/tileSize);
+
+                for(let ty=minY;ty<=maxY;ty++){
+                                for(let tx=minX;tx<=maxX;tx++){
+                                                if(ty<0||ty>=rows||tx<0||tx>=cols) continue;
+                                                if(MAZE[ty][tx]!=='W') continue;
+
+                                                const rx=tx*tileSize, ry=ty*tileSize;
+
+                                                const closestX=Math.max(rx, Math.min(ball.x, rx+tileSize));
+                                                const closestY=Math.max(ry, Math.min(ball.y, ry+tileSize));
+
+                                                const dx=ball.x-closestX;
+                                                const dy=ball.y-closestY;
+                                                const dist2=dx*dx+dy*dy;
+
+                                                if(dist2 < ball.r*ball.r){
+                                                                const dist=Math.sqrt(dist2)||0.001;
+                                                                const overlap=ball.r-dist;
+
+                                                                const nx=dx/dist, ny=dy/dist;
+
+                                                                ball.x += nx*overlap;
+                                                                ball.y += ny*overlap;
+
+                                                                const vdot = ball.vx*nx + ball.vy*ny;
+                                                                ball.vx -= 1.6*vdot*nx;
+                                                                ball.vy -= 1.6*vdot*ny;
+
+                                                                ball.vx *= 0.75;
+                                                                ball.vy *= 0.75;
+                                                }
+                                }
+                }
+}
+
+/* ======= Game state handlers ======= */
 function resetBall(){
-    ball.x = (floor.left + floor.right) / 2;
-    ball.y = (floor.top + floor.bottom) / 2;
-    ball.vx = 0; ball.vy = 0;
-    announce('Ball reset to center.');
+                if(!MAZE) return;
+                startPos = findTile('S');
+                goalPos = findTile('G');
+                holeTiles = findAllTiles('O');
+                ball.x=(startPos.x+0.5)*tileSize;
+                ball.y=(startPos.y+0.5)*tileSize;
+                ball.vx=0; ball.vy=0;
+                state.message='';
+                state.path=[];
 }
 
-// Physics loop
-let last = performance.now();
-let liveThrottle = 0;
-let lastCollisionTime = 0;
+function lost(){
+                // Failure: reset ball, pause game, reopen start screen so player can choose again.
+                state.message='Fell into a hole! Returning to map selection…';
+                resetBall();
+                state.running = false;
+                // show start screen for retry/choice
+                document.getElementById('start-screen').classList.remove('hidden');
+                // clear selection highlight so player can pick
+                document.querySelectorAll('.maze-option').forEach(o=>o.classList.remove('selected'));
+}
+
+function win(){
+                state.message='You reached the spiral! Congratulations.';
+                ball.vx=ball.vy=0;
+                // Pause the game and reopen the start screen so player can choose a new map
+                state.running = false;
+                document.getElementById('start-screen').classList.remove('hidden');
+                document.querySelectorAll('.maze-option').forEach(o=>o.classList.remove('selected'));
+                setTimeout(resetBall,1500);
+}
+
+/* ======= Input events (attached once) ======= */
+window.addEventListener('keydown', e=>{
+                if(e.key==="ArrowLeft"||e.key==="a"){ keys.left=true; e.preventDefault(); }
+                if(e.key==="ArrowRight"||e.key==="d"){ keys.right=true; e.preventDefault(); }
+                if(e.key==="ArrowUp"||e.key==="w"){ keys.up=true; e.preventDefault(); }
+                if(e.key==="ArrowDown"||e.key==="s"){ keys.down=true; e.preventDefault(); }
+});
+window.addEventListener('keyup', e=>{
+                if(e.key==="ArrowLeft"||e.key==="a") keys.left=false;
+                if(e.key==="ArrowRight"||e.key==="d") keys.right=false;
+                if(e.key==="ArrowUp"||e.key==="w") keys.up=false;
+                if(e.key==="ArrowDown"||e.key==="s") keys.down=false;
+});
+
+/* Pointer drag tilt */
+canvas.addEventListener('pointerdown', e=>{
+                pointer.down=true;
+                pointer.startX=e.clientX;
+                pointer.startY=e.clientY;
+                canvas.setPointerCapture(e.pointerId);
+});
+canvas.addEventListener('pointermove', e=>{
+                if(!pointer.down) return;
+                input.ax=(e.clientX-pointer.startX)*12;
+                input.ay=(e.clientY-pointer.startY)*12;
+});
+canvas.addEventListener('pointerup', e=>{
+                pointer.down=false;
+                input.ax=input.ay=0;
+                canvas.releasePointerCapture?.(e.pointerId);
+});
+
+/* UI buttons */
+document.getElementById('restart').onclick = ()=>{ if(MAZE) resetBall(); };
+document.getElementById('toggle-trace').onclick = ()=>{ state.trace = !state.trace; };
+
+/* ======= Resize handling ======= */
+function adjustCanvas(){
+                const sz=Math.min(window.innerWidth-40,window.innerHeight-40,720);
+                canvas.width=sz;
+                canvas.height=sz;
+                if(!MAZE) return;
+                tileSize=Math.min(canvas.width/cols,canvas.height/rows);
+                radius=tileSize*0.35;
+                ball.r=radius;
+}
+window.addEventListener('resize', adjustCanvas);
+
+/* ======= Game loop ======= */
 function step(now){
-    const dt = Math.min(0.05, (now - last) / 1000); // cap dt to avoid jumps
-    last = now;
+                if(!state.running) { state.lastTime = now; requestAnimationFrame(step); return; }
+                if(!state.lastTime) state.lastTime=now;
+                const dt=Math.min(0.03,(now-state.lastTime)/1000);
+                state.lastTime=now;
 
-    // Accelerations from tilt:
-    // Convert degrees to radians and use sin to get small-angle behavior.
-    const g = 9.81; // m/s^2 baseline (for feel)
-    const ax = g * Math.sin(gamma * Math.PI / 180) * settings.gScale;
-    const ay = g * Math.sin(beta  * Math.PI / 180) * settings.gScale;
+                physics(dt);
+                draw();
 
-    // Integrate velocity
-    ball.vx += ax * dt;
-    ball.vy += ay * dt;
-
-    // Apply linear drag (simple damping per second)
-    const dragFactor = Math.max(0, 1 - settings.drag * dt);
-    ball.vx *= dragFactor;
-    ball.vy *= dragFactor;
-
-    // Integrate position
-    ball.x += ball.vx * (50 * dt); // scale factor so world units feel like screen px
-    ball.y += ball.vy * (50 * dt);
-
-    // Collisions with soft bounce
-    const nowTs = performance.now();
-    let collided = false;
-    // left
-    if (ball.x - ball.r < floor.left){
-        ball.x = floor.left + ball.r;
-        if (ball.vx < 0) ball.vx = -ball.vx * settings.restitution;
-        // slight tangential damping
-        ball.vy *= 0.98;
-        collided = true;
-        collisionLabel('left');
-    }
-    // right
-    if (ball.x + ball.r > floor.right){
-        ball.x = floor.right - ball.r;
-        if (ball.vx > 0) ball.vx = -ball.vx * settings.restitution;
-        ball.vy *= 0.98;
-        collided = true;
-        collisionLabel('right');
-    }
-    // top
-    if (ball.y - ball.r < floor.top){
-        ball.y = floor.top + ball.r;
-        if (ball.vy < 0) ball.vy = -ball.vy * settings.restitution;
-        ball.vx *= 0.98;
-        collided = true;
-        collisionLabel('top');
-    }
-    // bottom
-    if (ball.y + ball.r > floor.bottom){
-        ball.y = floor.bottom - ball.r;
-        if (ball.vy > 0) ball.vy = -ball.vy * settings.restitution;
-        ball.vx *= 0.98;
-        collided = true;
-        collisionLabel('bottom');
-    }
-
-    // Render
-    render();
-
-    // Live accessibility updates (throttled)
-    liveThrottle += dt;
-    if (liveThrottle > 0.18){ // ~5-6 updates per second
-        liveThrottle = 0;
-        const bx = Math.round(ball.x - floor.left);
-        const by = Math.round(ball.y - floor.top);
-        status.textContent = `Tilt: β=${Math.round(beta)}°, γ=${Math.round(gamma)}° • Ball: x=${bx} y=${by}`;
-        liveRegion.textContent = `Tilt beta ${Math.round(beta)} degrees, gamma ${Math.round(gamma)} degrees. Ball position ${bx} by ${by} pixels.`;
-    }
-
-    requestAnimationFrame(step);
+                requestAnimationFrame(step);
 }
+
+/* ======= Start game with chosen maze ======= */
+function startGameWithMaze(maze){
+                // Prevent starting until motion permission state is resolved.
+                if(!motionAllowed){
+                        // Try to request permission now (may succeed because this call may be from a user gesture).
+                        requestMotionPermissionFromAPI().then(granted=>{
+                                if(granted){
+                                        // proceed to start
+                                        startGameWithMaze(maze);
+                                } else {
+                                        // keep start screen visible and inform user
+                                        document.getElementById('start-screen').classList.remove('hidden');
+                                }
+                        });
+                        return;
+                }
+
+                // Use a copy so original MAZES remain unchanged.
+                let chosen = maze.map(r=>r.slice());
+                if(expertMode){
+                        for(let y=0;y<chosen.length;y++){
+                                for(let x=0;x<chosen[0].length;x++){
+                                        if(chosen[y][x]==='W') chosen[y][x]='O';
+                                }
+                        }
+                }
+
+                MAZE = chosen;
+                rows = MAZE.length;
+                cols = MAZE[0].length;
+                tileSize = Math.min(canvas.width/cols, canvas.height/rows);
+                radius = tileSize*0.35;
+                ball.r = radius;
+                resetBall();
+                state.running = true;
+                state.lastTime = null;
+                document.getElementById('start-screen').classList.add('hidden');
+                // ensure canvas size and tile sizes updated
+                adjustCanvas();
+}
+
+/* Start main animation loop (it will wait until state.running is true) */
 requestAnimationFrame(step);
 
-// Collision helper to avoid repeating announcements
-function collisionLabel(side){
-    const now = performance.now();
-    if (now - lastCollisionTime < 180) return; // throttle collisions
-    lastCollisionTime = now;
-    if (audioOn) hitSound(0.25);
-    if (vibrateOn && navigator.vibrate) navigator.vibrate(40);
-    announce('Collision ' + side + ' wall.');
-}
-
-// Simple speech synthesis for announcements (toggle via audioOn)
-function announce(text){
-    // Do not spam; if audioOn tie it to speech toggle, else only live region
-    // We'll announce short sentences when audioOn is true
-    if (!audioOn) return;
-    if ('speechSynthesis' in window){
-        const u = new SpeechSynthesisUtterance(text);
-        u.lang = 'en-US';
-        u.rate = 1;
-        window.speechSynthesis.cancel();
-        window.speechSynthesis.speak(u);
-    }
-}
-
-// Drawing routine
-function render(){
-    // Clear
-    ctx.clearRect(0,0,canvas.clientWidth,canvas.clientHeight);
-
-    // Draw playfield (rounded rect)
-    const pad = 8;
-    const w = canvas.clientWidth;
-    const h = canvas.clientHeight;
-    const radius = 12;
-
-    // Outer shadow/wall
-    ctx.save();
-    ctx.fillStyle = '#0b1221';
-    ctx.fillRect(0,0,w,h);
-    ctx.restore();
-
-    // Floor area
-    ctx.save();
-    ctx.beginPath();
-    roundRect(ctx, floor.left, floor.top, floor.right - floor.left, floor.bottom - floor.top, radius);
-    ctx.fillStyle = '#f7fbff';
-    ctx.fill();
-    ctx.strokeStyle = 'rgba(0,0,0,0.15)';
-    ctx.lineWidth = 2;
-    ctx.stroke();
-    ctx.restore();
-
-    // Draw subtle grid lines to give tactile sense
-    ctx.save();
-    ctx.strokeStyle = 'rgba(0,0,0,0.02)';
-    ctx.lineWidth = 1;
-    const grid = 40;
-    for (let gx = floor.left + grid; gx < floor.right; gx += grid){
-        ctx.beginPath(); ctx.moveTo(gx, floor.top); ctx.lineTo(gx, floor.bottom); ctx.stroke();
-    }
-    for (let gy = floor.top + grid; gy < floor.bottom; gy += grid){
-        ctx.beginPath(); ctx.moveTo(floor.left, gy); ctx.lineTo(floor.right, gy); ctx.stroke();
-    }
-    ctx.restore();
-
-    // Draw ball shadow
-    ctx.save();
-    ctx.beginPath();
-    ctx.ellipse(ball.x + 5, ball.y + 8, ball.r*0.9, ball.r*0.35, 0, 0, Math.PI*2);
-    ctx.fillStyle = 'rgba(0,0,0,0.18)';
-    ctx.fill();
-    ctx.restore();
-
-    // Draw ball (metallic look)
-    ctx.save();
-    const grad = ctx.createRadialGradient(ball.x - ball.r*0.3, ball.y - ball.r*0.4, ball.r*0.2, ball.x, ball.y, ball.r);
-    grad.addColorStop(0, '#ffffff');
-    grad.addColorStop(0.3, '#cfe7ff');
-    grad.addColorStop(0.9, '#2b8cff');
-    grad.addColorStop(1, '#174f9a');
-    ctx.fillStyle = grad;
-    ctx.beginPath();
-    ctx.arc(ball.x, ball.y, ball.r, 0, Math.PI*2);
-    ctx.fill();
-
-    // specular highlight
-    ctx.beginPath();
-    ctx.fillStyle = 'rgba(255,255,255,0.7)';
-    ctx.ellipse(ball.x - ball.r*0.25, ball.y - ball.r*0.4, ball.r*0.35, ball.r*0.22, -0.6, 0, Math.PI*2);
-    ctx.fill();
-    ctx.restore();
-
-    // Debug info (small)
-    //ctx.fillStyle = 'rgba(0,0,0,0.6)';
-    //ctx.fillText(`v=${ball.vx.toFixed(2)},${ball.vy.toFixed(2)}`, 12, 20);
-}
-
-// Round rect helper
-function roundRect(ctx, x, y, w, h, r){
-    ctx.moveTo(x + r, y);
-    ctx.arcTo(x + w, y, x + w, y + h, r);
-    ctx.arcTo(x + w, y + h, x, y + h, r);
-    ctx.arcTo(x, y + h, x, y, r);
-    ctx.arcTo(x, y, x + w, y, r);
-    ctx.closePath();
-}
-
-// On initial load, center ball relative to initial canvas size
-setBounds();
-resetBall();
-
-// Informative console for debugging
-console.info('Marble Maze initialized. Use device tilt or arrow keys.');
-
-// Accessibility: focus canvas and announce startup
-canvas.addEventListener('focus', ()=> {
-    liveRegion.textContent = 'Play area focused. Use device tilt or arrow keys to move the ball.';
+/* ======= Start screen selection logic ======= */
+const options = document.querySelectorAll('.maze-option');
+options.forEach(opt=>{
+                opt.addEventListener('click', (ev)=>{
+                                const idx = Number(opt.dataset.index);
+                                options.forEach(o=>o.classList.remove('selected'));
+                                opt.classList.add('selected');
+                                // small delay to show selection feedback, then start
+                                setTimeout(()=>{
+                                        // attempt to start; startGameWithMaze will request permission if needed
+                                        startGameWithMaze(MAZES[idx]);
+                                }, 100);
+                });
+                opt.addEventListener('mouseenter', ()=> opt.classList.add('hover'));
+                opt.addEventListener('mouseleave', ()=> opt.classList.remove('hover'));
 });
 
-// Ensure bounds update on window resize
-window.addEventListener('resize', ()=> { resize(); setBounds(); });
+/* Expert mode toggle handler */
+expertBtn.addEventListener('click', ()=>{
+        expertMode = !expertMode;
+        if(expertMode){
+                expertBtn.classList.add('active');
+                expertBtn.textContent = 'Expert Mode: ON';
+        } else {
+                expertBtn.classList.remove('active');
+                expertBtn.textContent = 'Expert Mode: OFF';
+        }
+});
 
-// Prevent scrolling on touch while interacting with the canvas (improves mobile feel)
-let touching = false;
-canvas.addEventListener('touchstart', (e)=>{ touching=true; }, {passive:false});
-canvas.addEventListener('touchend', ()=>{ touching=false; }, {passive:false});
-window.addEventListener('touchmove', (e)=>{ if (touching) e.preventDefault(); }, {passive:false});
+/* Enable motion button handler (user gesture) */
+enableBtn.addEventListener('click', ev=>{
+        // this click is a user gesture and will allow requestPermission() on iOS
+        requestMotionPermissionFromAPI().then(granted=>{
+                if(granted){
+                        // no further action needed; user may pick a maze now
+                } else {
+                        // leave button visible so user can try again
+                }
+        });
+});
+
+/* On load: decide if explicit permission is required. If not, attach listeners immediately.
+   If explicit permission is required, show enable button and instruct user. */
+window.addEventListener('load', ()=> {
+                for(let i=0;i<MAZES.length;i++){
+                                drawPreviewToCanvas(document.getElementById('preview-'+i), MAZES[i]);
+                }
+                adjustCanvas();
+
+                const needDevMotion = (typeof DeviceMotionEvent !== 'undefined' && typeof DeviceMotionEvent.requestPermission === 'function');
+                const needDevOrient = (typeof DeviceOrientationEvent !== 'undefined' && typeof DeviceOrientationEvent.requestPermission === 'function');
+
+                if(needDevMotion || needDevOrient){
+                        motionPermissionRequired = true;
+                        enableBtn.classList.remove('hidden');
+                        permHint.textContent = "Tap 'Enable Motion' to grant tilt access (required on some mobile devices).";
+                } else {
+                        // not required - allow motion now
+                        motionAllowed = true;
+                        attachMotionListeners();
+                        enableBtn.classList.add('hidden');
+                        permHint.textContent = "Motion available (no permission required). Choose a map to start.";
+                }
+});
 </script>
 </body>
-</html></div>Marble</div>
+</html>
