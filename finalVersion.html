@@ -152,12 +152,12 @@ width=device-width,initial-scale=1
 <body>
 <div id="game">
 <canvas id="c" width="720" height="720"></canvas>
-<div id="ui">
-<button id="restart">Restart</button>
-<button id="toggle-trace">Toggle Trace</button>
+<div id="ui" class="hidden"></div>
+<button id="restart" class="hidden"></button>
+<button id="toggle-trace" class="hidden"></button>
 </div>
-<div id="msg">Use arrow keys, drag, or tilt. Reach the spiral. Avoid black holes.</div>
-<div id="legend">Holes = black • Goal = spiral</div>
+<div id="msg" class="hidden"></div>
+<div id="legend" class="hidden"></div>
 </div>
 <div id="start-screen">
 <div id="start-panel">
@@ -165,7 +165,7 @@ width=device-width,initial-scale=1
 <button id="enable-motion" class="hidden">Enable Motion</button>
 <button id="expert-mode">Expert Mode: OFF</button>
 <div id="permission-hint">Motion permission is requested to allow tilt control. Grant it now if your
-                   device requires it.</div>
+                                   device requires it.</div>
 </div>
 <div class="maze-row">
 <div class="maze-option" data-index="0" title="Easy">
