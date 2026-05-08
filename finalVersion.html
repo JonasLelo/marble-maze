@@ -1,843 +1,782 @@
 <!doctype html>
-<html lang="en">
+<html lang="de">
 <head>
 <meta charset="utf-8" />
-<title>Marble Maze — Choose Maze</title>
-<meta name="viewport" content="
-width=device-width,initial-scale=1
-" />
+<title>Marble Maze</title>
+<meta name="viewport" content="width=device-width, initial-scale=1" />
 <style>
-       html,
-       body {
-           height: 100%;
-           margin: 0;
-           background: radial-gradient(circle at center, #5c4535 0%, #20140c 100%);
-           display: flex;
-           align-items: center;
-           justify-content: center;
-           font-family: system-ui, Segoe UI, Roboto, sans-serif
-       }
-       #game {
-           position: relative
-       }
-       canvas {
-           background: #3d2416;
-           display: block;
-           border: 8px solid #2a1a10;
-           border-radius: 8px;
-           box-shadow: 0 16px 40px rgba(0, 0, 0, 0.6), inset 0 0 40px rgba(0, 0, 0, 1)
-       }
-       #ui {
-           position: absolute;
-           left: 8px;
-           top: 8px;
-           color: #fff;
-           display: flex;
-           gap: 8px
-       }
-       button {
-           background: #333;
-           color: #fff;
-           border: none;
-           padding: 6px 10px;
-           border-radius: 6px;
-           cursor: pointer
-       }
-       #msg {
-           position: absolute;
-           right: 8px;
-           top: 8px;
-           background: rgba(0, 0, 0, .6);
-           color: #fff;
-           padding: 8px 12px;
-           border-radius: 6px
-       }
-       #legend {
-           position: absolute;
-           left: 8px;
-           bottom: 8px;
-           background: rgba(0, 0, 0, .6);
-           color: #fff;
-           padding: 6px 10px;
-           border-radius: 6px;
-           font-size: 13px
-       }
-/* START SCREEN */
-       #start-screen {
-           position: fixed;
-           inset: 0;
-           display: flex;
-           align-items: center;
-           justify-content: center;
-           background: linear-gradient(rgba(0, 0, 0, 0.45), rgba(0, 0, 0, 0.45));
-           z-index: 1000;
-       }
-       #start-panel {
-           background: linear-gradient(135deg, #f7f3ec, #e2d7c5);
-           padding: 24px;
-           border-radius: 16px;
-           box-shadow: 0 20px 50px rgba(0, 0, 0, 0.6);
-           display: flex;
-           gap: 16px;
-           align-items: center;
-           flex-direction: column;
-           border: 1px solid rgba(255, 255, 255, 0.6);
-       }
-       .maze-row {
-           display: flex;
-           gap: 16px
-       }
-       .maze-option {
-           width: 150px;
-           text-align: center;
-           cursor: pointer;
-           border-radius: 12px;
-           padding: 12px;
-           transition: all .2s ease;
-           background: #ffffff;
-           box-shadow: 0 6px 12px rgba(0, 0, 0, 0.1);
-           border: 1px solid #e0d0b8;
-       }
-       .maze-option:hover {
-           transform: translateY(-6px);
-           box-shadow: 0 16px 30px rgba(0, 0, 0, 0.15);
-           border-color: #cd9a5b;
-       }
-       .preview {
-           width: 120px;
-           height: 120px;
-           border: 2px solid #5c3a21;
-           border-radius: 6px;
-           background: #3d2416;
-           margin: 4px auto 12px;
-           display: block;
-           box-shadow: inset 0 0 10px rgba(0, 0, 0, 0.5);
-       }
-       .difficulty {
-           font-weight: 700;
-           margin-top: 6px
-       }
-       .hint {
-           font-size: 13px;
-           color: #444;
-           margin-top: 6px
-       }
-       #start-screen.hidden,
-       .hidden {
-           display: none
-       }
-       .selected {
-           outline: 3px solid #cd9a5b;
-           box-shadow: 0 10px 30px rgba(205, 154, 91, 0.3)
-       }
-       #enable-motion {
-           background: #1a73e8;
-           padding: 8px 12px;
-           border-radius: 8px;
-           color: #fff;
-           border: none;
-           cursor: pointer
-       }
-       #permission-hint {
-           font-size: 13px;
-           color: #444;
-           margin-top: 6px
-       }
-/* expert toggle look (small) */
-       #expert-mode.active {
-           background: #b71c1c
-       }
+    /* Basis-Stile */
+    html, body {
+        height: 100%;
+        margin: 0;
+        background: radial-gradient(circle at center, #5c4535 0%, #20140c 100%);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-family: system-ui, Segoe UI, Roboto, sans-serif;
+        color: #fff;
+    }
+    #game {
+        position: relative;
+    }
+    canvas {
+        background: #3d2416;
+        display: block;
+        border: 8px solid #2a1a10;
+        border-radius: 8px;
+        box-shadow: 0 16px 40px rgba(0, 0, 0, 0.6), inset 0 0 40px rgba(0, 0, 0, 1);
+    }
+    /* Benutzer-Oberfläche */
+    #ui { position: absolute; left: 8px; top: 8px; color: #fff; display: flex; gap: 8px; }
+    button { background: #3d2416; color: #fff; border: none; padding: 6px 10px; border-radius: 6px; cursor: pointer; }
+    #msg { position: absolute; right: 8px; top: 8px; background: rgba(0,0,0,0.6); color: #fff; padding: 8px 12px; border-radius: 6px; }
+    #legend { position: absolute; left: 8px; bottom: 8px; background: rgba(0,0,0,0.6); color: #fff; padding: 6px 10px; border-radius: 6px; font-size: 13px; }
+    /* Versteckt-Klassen */
+    .hidden { display: none !important; }
+
+    /* START BILDSCHIRM */
+    #start-screen {
+        position: fixed;
+        inset: 0;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background: linear-gradient(rgba(0,0,0,0.45), rgba(0,0,0,0.45));
+        z-index: 1000;
+    }
+    #start-panel {
+        background: linear-gradient(135deg, #f7f3ec, #e2d7c5);
+        padding: 24px;
+        border-radius: 16px;
+        box-shadow: 0 20px 50px rgba(0,0,0,0.6);
+        display: flex;
+        flex-direction: column;
+        gap: 24px;
+        align-items: center;
+        border: 1px solid rgba(255,255,255,0.6);
+    }
+    #start-title {
+        font-size: 2em;
+        font-weight: bold;
+        color: #cd9a5b;
+        text-shadow: 2px 2px #2a1a10;
+    }
+    #start-buttons {
+        display: flex;
+        gap: 16px;
+    }
+    .start-btn {
+        font-size: 1em;
+        padding: 12px 24px;
+        background: #5c3a21;
+        border: none;
+        border-radius: 12px;
+        color: #fff;
+        cursor: pointer;
+        box-shadow: 0 6px 12px rgba(0,0,0,0.1);
+        transition: transform 0.2s, box-shadow 0.2s;
+    }
+    .start-btn:hover {
+        transform: translateY(-4px);
+        box-shadow: 0 12px 24px rgba(0,0,0,0.2);
+    }
+    /* Labyrinth-Auswahl im Startbereich */
+    .maze-row {
+        display: flex;
+        gap: 16px;
+    }
+    .maze-option {
+        width: 150px;
+        text-align: center;
+        cursor: pointer;
+        border-radius: 12px;
+        padding: 12px;
+        transition: transform .2s ease;
+        background: #ffffff;
+        box-shadow: 0 6px 12px rgba(0,0,0,0.1);
+        border: 1px solid #e0d0b8;
+    }
+    .maze-option:hover {
+        transform: translateY(-6px);
+        box-shadow: 0 16px 30px rgba(0,0,0,0.15);
+        border-color: #cd9a5b;
+    }
+    .preview {
+        width: 120px; height: 120px;
+        border: 2px solid #5c3a21;
+        border-radius: 6px;
+        background: #3d2416;
+        margin: 4px auto 12px;
+        display: block;
+        box-shadow: inset 0 0 10px rgba(0,0,0,0.5);
+    }
+    .difficulty {
+        font-weight: 700;
+        margin-top: 6px;
+    }
+    .hint {
+        font-size: 13px;
+        color: #444;
+        margin-top: 6px;
+    }
+    .selected {
+        outline: 3px solid #cd9a5b;
+        box-shadow: 0 10px 30px rgba(205,154,91,0.3);
+    }
+    /* Zurück-Button (Pfeil) */
+    .back-btn {
+        position: absolute;
+        left: 8px; top: 8px;
+        background: rgba(0,0,0,0.6);
+        color: #fff;
+        border: none;
+        padding: 8px 12px;
+        border-radius: 6px;
+        cursor: pointer;
+        font-size: 1em;
+    }
+
+    /* ANLEITUNGSGRUNDSTÜCK */
+    #howto-screen {
+        position: fixed;
+        inset: 0;
+        background: linear-gradient(rgba(0,0,0,0.7), rgba(0,0,0,0.7));
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        z-index: 1000;
+    }
+    #howto-panel {
+        background: #f7f3ec;
+        color: #000;
+        padding: 24px;
+        border-radius: 16px;
+        max-width: 600px;
+        box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+        position: relative;
+        font-size: 14px;
+    }
+    #howto-panel h2 {
+        margin-top: 0;
+        color: #5c3a21;
+    }
+    #howto-panel ul {
+        margin-left: 1.2em;
+    }
+    /* Responsive Text */
+    @media (max-width: 480px) {
+        #howto-panel { width: 90%; }
+        #start-panel { width: 90%; padding: 16px; }
+        #start-title { font-size: 1.5em; }
+        .start-btn { padding: 10px 20px; font-size: 0.9em; }
+    }
 </style>
 </head>
 <body>
-<div id="game">
-<canvas id="c" width="720" height="720"></canvas>
-<div id="ui">
-<button id="restart">Restart</button>
-<button id="toggle-trace">Toggle Trace</button>
-</div>
-<div id="msg">Use arrow keys, drag, or tilt. Reach the spiral. Avoid black holes.</div>
-<div id="legend">Holes = black • Goal = spiral</div>
-</div>
-<div id="start-screen">
-<div id="start-panel">
-<div style="display:flex;align-items:center;gap:12px;">
-<button id="enable-motion" class="hidden">Enable Motion</button>
-<button id="expert-mode">Expert Mode: OFF</button>
-<div id="permission-hint">Motion permission is requested to allow tilt control. Grant it now if your
-                   device requires it.</div>
-</div>
-<div class="maze-row">
-<div class="maze-option" data-index="0" title="Easy">
-<canvas class="preview" id="preview-0" width="120" height="120"></canvas>
-<div class="difficulty">Easy</div>
-<div class="hint">Beginner</div>
-</div>
-<div class="maze-option" data-index="1" title="Medium">
-<canvas class="preview" id="preview-1" width="120" height="120"></canvas>
-<div class="difficulty">Medium</div>
-<div class="hint">Challenging</div>
-</div>
-<div class="maze-option" data-index="2" title="Hard">
-<canvas class="preview" id="preview-2" width="120" height="120"></canvas>
-<div class="difficulty">Hard</div>
-<div class="hint">Expert</div>
-</div>
-</div>
-</div>
-</div>
+    <!-- Startbildschirm -->
+    <div id="start-screen">
+        <div id="start-panel">
+            <div id="start-title">Marble Maze</div>
+            <div id="start-buttons">
+                <button id="btn-play" class="start-btn">Play</button>
+                <button id="btn-howto" class="start-btn">How To Play</button>
+            </div>
+            <!-- Labyrinth-Auswahl -->
+            <div class="maze-row">
+                <div class="maze-option" data-index="0" title="Einfach">
+                    <canvas class="preview" id="preview-0" width="120" height="120"></canvas>
+                    <div class="difficulty">Easy</div>
+                    <div class="hint">Anfänger</div>
+                </div>
+                <div class="maze-option" data-index="1" title="Mittel">
+                    <canvas class="preview" id="preview-1" width="120" height="120"></canvas>
+                    <div class="difficulty">Medium</div>
+                    <div class="hint">Herausfordernd</div>
+                </div>
+                <div class="maze-option" data-index="2" title="Schwer">
+                    <canvas class="preview" id="preview-2" width="120" height="120"></canvas>
+                    <div class="difficulty">Hard</div>
+                    <div class="hint">Experte</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Spielbereich -->
+    <div id="game">
+        <canvas id="c" width="720" height="720"></canvas>
+        <div id="ui" class="hidden">
+            <!-- Hier könnten Zusatz-Buttons (z.B. Trace) eingefügt werden -->
+        </div>
+        <button id="back-from-game" class="back-btn hidden">&#8592; Zurück</button>
+    </div>
+    <div id="msg" class="hidden"></div>
+    <div id="legend" class="hidden"></div>
+
+    <!-- Anleitungsbildschirm -->
+    <div id="howto-screen" class="hidden">
+        <div id="howto-panel">
+            <h2>Spielanleitung</h2>
+            <p>Steuere die Kugel mit den Pfeiltasten oder indem du das Gerät kippst (Tilt). Du kannst die Kugel auch per Mauszeiger ziehen und dann loslassen.</p>
+            <ul>
+                <li><strong>Ziel:</strong> Führe die Kugel durch das Labyrinth zur gelben Spirale (Ziel).</li>
+                <li><strong>Löcher:</strong> Schwarze Löcher sind Hindernisse. Wenn du hineinfällst, wird die Kugel zum Startpunkt zurückgesetzt.</li>
+                <li><strong>Respawn:</strong> Nach einem Sturz spawnst du einfach am Anfang des aktuellen Levels neu. Du kommst nicht zurück zur Map-Auswahl.</li>
+                <li><strong>Tipps:</strong> Pass auf deine Geschwindigkeit auf! Nutze kleine Bewegungen, um präzise durch enge Stellen zu kommen.</li>
+            </ul>
+            <button id="btn-back-howto" class="start-btn" style="margin-top:16px;">Zurück</button>
+        </div>
+    </div>
+
 <script>
-/* ======= Maze definitions (three mazes) ======= */
-/* Easy (original) */
+/* ======= Labyrinth-Definitionen (3 Level) ======= */
+/* Einfach */
 const MAZE_EASY = [
-           "W W W W W W W W W W W W W",
-           "W S . . . . . . . . . . O",
-           "W . W W W . W W W W W . W",
-           "W . . . W . W W W W . . W",
-           "W W W . W . . . . O . W W",
-           "W . . . W W W W . W . W W",
-           "W . W W W O . . . W . . W",
-           "W . . . . W . W W W O . W",
-           "W O W W . W . W W W . . W",
-           "W . . . . W . . . . . W W",
-           "W . W W W W . W . W W W W",
-           "W . . . . . . O . . . G W",
-           "W W W W W W W W O W W W W"
-       ].map(r => r.split(' '));
-/* Medium (new layout) */
+    "W W W W W W W W W W W W W".split(' '),
+    "W S . . . . . . . . . . O".split(' '),
+    "W . W W W . W W W W W . W".split(' '),
+    "W . . . W . W W W W . . W".split(' '),
+    "W W W . W . . . . O . W W".split(' '),
+    "W . . . W W W W . W . W W".split(' '),
+    "W . W W W O . . . W . . W".split(' '),
+    "W . . . . W . W W W O . W".split(' '),
+    "W O W W . W . W W W . . W".split(' '),
+    "W . . . . W . . . . . W W".split(' '),
+    "W . W W W W . W . W W W W".split(' '),
+    "W . . . . . . O . . . G W".split(' '),
+    "W W W W W W W W O W W W W".split(' ')
+];
+/* Mittel */
 const MAZE_MED = [
-           "W W W W W O W W W W W W W",
-           "W S . . W . . . . . . O W",
-           "W W W . W . W W W W . W W",
-           "O . . . . . . O W W . . W",
-           "W . W O W W . W W W O . W",
-           "W . . . . O . . . O . . W",
-           "W O W W . W O W . W . O W",
-           "W W W W . W W W . W . W W",
-           "O . . . . . . . . . . O W",
-           "W . W W O W W W O W O W W",
-           "W . . . . O . . . O W W W",
-           "W O W W . . . W . . . G W",
-           "W W W W W W W W W W W W W"
-       ].map(r => r.split(' '));
-/* Hard (dense walls) */
+    "W W W W W O W W W W W W W".split(' '),
+    "W S . . W . . . . . . O W".split(' '),
+    "W W W . W . W W W W . W W".split(' '),
+    "O . . . . . . O W W . . W".split(' '),
+    "W . W O W W . W W W O . W".split(' '),
+    "W . . . . O . . . O . . W".split(' '),
+    "W O W W . W O W . W . O W".split(' '),
+    "W W W W . W W W . W . W W".split(' '),
+    "O . . . . . . . . . . O W".split(' '),
+    "W . W W O W W W O W O W W".split(' '),
+    "W . . . . O . . . O W W W".split(' '),
+    "W O W W . . . W . . . G W".split(' '),
+    "W W W W W W W W W W W W W".split(' ')
+];
+/* Schwer */
 const MAZE_HARD = [
-           "W W W W W O W W W W W W W",
-           "W S . . O . . . . O W W W",
-           "W W W . W . W W . . . . O",
-           "O . . . . . O O O W W . W",
-           "W . W O O W W . . . . . W",
-           "W . W O . . . . O . W O W",
-           "W . W . . O W W O . . . O",
-           "W . . . O O . . . O O . W",
-           "W O W O . . . O . . . . W",
-           "O . . . . O O W W O W O W",
-           "W . W W O . . . O . . . O",
-           "W . . . . . O . . . O G W",
-           "W O W W W W W O W W W W W"
-       ].map(r => r.split(' '));
+    "W W W W W O W W W W W W W".split(' '),
+    "W S . . O . . . . O W W W".split(' '),
+    "W W W . W . W W . . . . O".split(' '),
+    "O . . . . . O O O W W . W".split(' '),
+    "W . W O O W W . . . . . W".split(' '),
+    "W . W O . . . . O . W O W".split(' '),
+    "W . W . . O W W O . . . O".split(' '),
+    "W . . . O O . . . O O . W".split(' '),
+    "W O W O . . . O . . . . W".split(' '),
+    "O . . . . O O W W O W O W".split(' '),
+    "W . W W O . . . O . . . O".split(' '),
+    "W . . . . . O . . . O G W".split(' '),
+    "W O W W W W W O W W W W W".split(' ')
+];
 const MAZES = [MAZE_EASY, MAZE_MED, MAZE_HARD];
-/* ======= Core game variables (will be initialized per selection) ======= */
-let MAZE = null; // will be set to chosen maze array
+
+/* ======= Spiel-Variablen ======= */
+let MAZE = null;
 let canvas = document.getElementById('c');
 let ctx = canvas.getContext('2d');
 let rows = 0, cols = 0, tileSize = 40, radius = 12;
 let startPos, goalPos, holeTiles = [];
-       function findTile(ch) {
-           for (let y = 0; y < rows; y++) for (let x = 0; x < cols; x++) if (MAZE[y][x] === ch) return { x, y };
-       }
-       function findAllTiles(ch) {
-const out = [];
-           for (let y = 0; y < rows; y++) for (let x = 0; x < cols; x++) if (MAZE[y][x] === ch) out.push({ x, y });
-return out;
-       }
-/* Ball and state */
+
+function findTile(ch) {
+    for (let y = 0; y < rows; y++) 
+        for (let x = 0; x < cols; x++) 
+            if (MAZE[y][x] === ch) return { x, y };
+}
+function findAllTiles(ch) {
+    const out = [];
+    for (let y = 0; y < rows; y++) 
+        for (let x = 0; x < cols; x++) 
+            if (MAZE[y][x] === ch) out.push({ x, y });
+    return out;
+}
+
+/* Ball und Zustand */
 let ball = { x: 0, y: 0, vx: 0, vy: 0, r: 10 };
-const state = {
-           running: false, trace: false, message: '', path: [], lastTime: null
-       };
-/* Physics params */
-const friction = 0.98;
-const maxSpeed = 800;
-const accPower = 1800;
-/* Input */
+const state = { running: false, trace: false, message: '', path: [], lastTime: null };
+
+/* Physikparameter */
+const friction = 0.98, maxSpeed = 800, accPower = 1800;
+
+/* Eingabe */
 let input = { ax: 0, ay: 0 };
-const keys = { left: false, right: false, up: false, down: false };
-const pointer = { down: false, startX: 0, startY: 0 };
-/* Gravity / tilt (axes swapped as requested) */
-let gravityX = 0, gravityY = 0;
-/* Motion permission management */
-let motionAllowed = false;
-let motionPermissionRequired = false;
-const enableBtn = document.getElementById('enable-motion');
-const permHint = document.getElementById('permission-hint');
-/* Expert mode flag and button */
-let expertMode = false;
-const expertBtn = document.getElementById('expert-mode');
-       function attachMotionListeners() {
-// attach appropriate listeners for orientation or fallback to mouse
-           if (window.DeviceOrientationEvent && typeof window.DeviceOrientationEvent !== 'undefined') {
-               window.addEventListener("deviceorientation", e => {
-                   if (e.gamma == null || e.beta == null) return;
-                   gravityX = -e.beta / 45;
-                   gravityY = e.gamma / 45;
-               });
-           } else {
-               window.addEventListener("mousemove", e => {
-const rect = canvas.getBoundingClientRect();
-const cx = rect.left + rect.width / 2;
-const cy = rect.top + rect.height / 2;
-                   gravityX = (e.clientX - cx) / (rect.width / 2);
-                   gravityY = (e.clientY - cy) / (rect.height / 2);
-               });
-           }
-       }
-       function requestMotionPermissionFromAPI() {
-// Returns a Promise that resolves true if permission granted (or not needed), false otherwise
-return new Promise((resolve) => {
-// If API requires explicit permission (iOS 13+), request it.
-const needDevMotion = (typeof DeviceMotionEvent !== 'undefined' && typeof DeviceMotionEvent.requestPermission === 'function');
-const needDevOrient = (typeof DeviceOrientationEvent !== 'undefined' && typeof DeviceOrientationEvent.requestPermission === 'function');
-               if (needDevMotion) {
-                   DeviceMotionEvent.requestPermission().then(response => {
-                       if (response === 'granted') {
-                           motionAllowed = true;
-                           attachMotionListeners();
-                           enableBtn.classList.add('hidden');
-                           permHint.textContent = "Motion enabled. Choose a map to start.";
-                           resolve(true);
-                       } else {
-                           permHint.textContent = "Motion permission denied. You can still play with keyboard/mouse.";
-                           resolve(false);
-                       }
-                   }).catch(err => {
-                       permHint.textContent = "Motion permission request failed.";
-                       resolve(false);
-                   });
-return;
-               }
-               if (needDevOrient) {
-                   DeviceOrientationEvent.requestPermission().then(response => {
-                       if (response === 'granted') {
-                           motionAllowed = true;
-                           attachMotionListeners();
-                           enableBtn.classList.add('hidden');
-                           permHint.textContent = "Motion enabled. Choose a map to start.";
-                           resolve(true);
-                       } else {
-                           permHint.textContent = "Motion permission denied. You can still play with keyboard/mouse.";
-                           resolve(false);
-                       }
-                   }).catch(err => {
-                       permHint.textContent = "Motion permission request failed.";
-                       resolve(false);
-                   });
-return;
-               }
-// No explicit permission required in this browser
-               motionAllowed = true;
-               attachMotionListeners();
-               enableBtn.classList.add('hidden');
-               permHint.textContent = "Motion available (no permission required). Choose a map to start.";
-               resolve(true);
-           });
-       }
-/* ======= Preview rendering for start screen ======= */
-       function drawPreviewToCanvas(pcan, maze) {
-const pctx = pcan.getContext('2d');
-const w = pcan.width, h = pcan.height;
-           pctx.clearRect(0, 0, w, h);
-const r = maze.length, c = maze[0].length;
-const ts = Math.min(w / c, h / r);
-// background
-           pctx.fillStyle = "#3d2416";
-           pctx.fillRect(0, 0, w, h);
-           for (let y = 0; y < r; y++) {
-               for (let x = 0; x < c; x++) {
-const px = x * ts + (w - ts * c) / 2;
-const py = y * ts + (h - ts * r) / 2;
-const t = maze[y][x];
-                   if (t === 'W') {
-const wTop = (y > 0 && maze[y - 1][x] === 'W');
-const wBottom = (y < r - 1 && maze[y + 1][x] === 'W');
-const wLeft = (x > 0 && maze[y][x - 1] === 'W');
-const wRight = (x < c - 1 && maze[y][x + 1] === 'W');
-                       pctx.fillStyle = '#4a2f1d';
-                       pctx.fillRect(px, py, ts, ts);
-const off = 1;
-const tL_x = wLeft ? px : px + off;
-const tL_y = wTop ? py : py + off;
-const tR_x = wRight ? px + ts : px + ts - off;
-const bL_y = wBottom ? py + ts : py + ts - off;
-                       pctx.fillStyle = '#5c3a21';
-                       pctx.fillRect(tL_x, tL_y, tR_x - tL_x, bL_y - tL_y);
-                   } else {
-                       pctx.fillStyle = '#cd9a5b';
-                       pctx.fillRect(px, py, ts, ts);
-                       pctx.fillStyle = '#be8a4b';
-                       pctx.fillRect(px + ts - 1, py, 1, ts);
-                       pctx.fillRect(px, py + ts - 1, ts, 1);
-                   }
-                   if (t === 'O') {
-const cx = px + ts / 2, cy = py + ts / 2, rHole = ts * 0.22;
-                       pctx.fillStyle = 'rgba(255,255,255,0.2)';
-                       pctx.beginPath(); pctx.arc(cx, cy + 1, rHole, 0, Math.PI * 2); pctx.fill();
-                       pctx.fillStyle = 'rgba(0,0,0,0.6)';
-                       pctx.beginPath(); pctx.arc(cx, cy - 1, rHole, 0, Math.PI * 2); pctx.fill();
-                       pctx.fillStyle = '#111';
-                       pctx.beginPath(); pctx.arc(cx, cy, rHole, 0, Math.PI * 2); pctx.fill();
-                       pctx.fillStyle = '#000';
-                       pctx.beginPath(); pctx.arc(cx - 1, cy - 1, rHole - 1, 0, Math.PI * 2); pctx.fill();
-                   }
-                   if (t === 'G') {
-                       pctx.fillStyle = '#ffc107';
-                       pctx.beginPath();
-                       pctx.arc(px + ts / 2, py + ts / 2, ts * 0.25, 0, Math.PI * 2);
-                       pctx.fill();
-                       pctx.strokeStyle = '#fff'; pctx.lineWidth = 1;
-                       pctx.stroke();
-                   }
-                   if (t === 'S') {
-                       pctx.fillStyle = '#2b7';
-                       pctx.beginPath();
-                       pctx.arc(px + ts / 2, py + ts / 2, ts * 0.16, 0, Math.PI * 2);
-                       pctx.fill();
-                   }
-               }
-           }
-       }
-/* Render previews now */
-       for (let i = 0; i < MAZES.length; i++) {
-const pcan = document.getElementById('preview-' + i);
-           drawPreviewToCanvas(pcan, MAZES[i]);
-       }
-/* ======= Drawing functions (use current MAZE) ======= */
-       function draw() {
-           ctx.clearRect(0, 0, canvas.width, canvas.height);
-           if (!MAZE) return;
-           for (let y = 0; y < rows; y++) {
-               for (let x = 0; x < cols; x++) {
-const px = x * tileSize, py = y * tileSize;
-const t = MAZE[y][x];
-                   if (t === 'W') {
-const wTop = (y > 0 && MAZE[y - 1][x] === 'W');
-const wBottom = (y < rows - 1 && MAZE[y + 1][x] === 'W');
-const wLeft = (x > 0 && MAZE[y][x - 1] === 'W');
-const wRight = (x < cols - 1 && MAZE[y][x + 1] === 'W');
-                       ctx.fillStyle = '#4a2f1d';
-                       ctx.fillRect(px, py, tileSize, tileSize);
-const off = 4;
-const tL_x = wLeft ? px : px + off;
-const tL_y = wTop ? py : py + off;
-const tR_x = wRight ? px + tileSize : px + tileSize - off;
-const tR_y = wTop ? py : py + off;
-const bL_x = wLeft ? px : px + off;
-const bL_y = wBottom ? py + tileSize : py + tileSize - off;
-const bR_x = wRight ? px + tileSize : px + tileSize - off;
-const bR_y = wBottom ? py + tileSize : py + tileSize - off;
-                       if (!wTop) {
-                           ctx.fillStyle = 'rgba(255,255,255,0.08)';
-                           ctx.beginPath();
-                           ctx.moveTo(px, py); ctx.lineTo(px + tileSize, py);
-                           ctx.lineTo(tR_x, tR_y); ctx.lineTo(tL_x, tL_y);
-                           ctx.fill();
-                       }
-                       if (!wLeft) {
-                           ctx.fillStyle = 'rgba(255,255,255,0.08)';
-                           ctx.beginPath();
-                           ctx.moveTo(px, py); ctx.lineTo(px, py + tileSize);
-                           ctx.lineTo(bL_x, bL_y); ctx.lineTo(tL_x, tL_y);
-                           ctx.fill();
-                       }
-                       if (!wBottom) {
-                           ctx.fillStyle = 'rgba(0,0,0,0.4)';
-                           ctx.beginPath();
-                           ctx.moveTo(px, py + tileSize); ctx.lineTo(px + tileSize, py + tileSize);
-                           ctx.lineTo(bR_x, bR_y); ctx.lineTo(bL_x, bL_y);
-                           ctx.fill();
-                       }
-                       if (!wRight) {
-                           ctx.fillStyle = 'rgba(0,0,0,0.4)';
-                           ctx.beginPath();
-                           ctx.moveTo(px + tileSize, py); ctx.lineTo(px + tileSize, py + tileSize);
-                           ctx.lineTo(bR_x, bR_y); ctx.lineTo(tR_x, tR_y);
-                           ctx.fill();
-                       }
-                       ctx.fillStyle = '#5c3a21';
-                       ctx.fillRect(tL_x, tL_y, tR_x - tL_x, bL_y - tL_y);
-                   } else {
-                       ctx.fillStyle = '#cd9a5b';
-                       ctx.fillRect(px, py, tileSize, tileSize);
-                       ctx.fillStyle = '#be8a4b';
-                       ctx.fillRect(px + tileSize - 1, py, 1, tileSize);
-                       ctx.fillRect(px, py + tileSize - 1, tileSize, 1);
-                   }
-                   if (t === 'O') drawHole(px + tileSize / 2, py + tileSize / 2, tileSize * 0.4);
-                   if (t === 'G') drawSpiral(px + tileSize / 2, py + tileSize / 2, tileSize * 0.42);
-               }
-           }
-           if (state.trace && state.path.length > 1) {
-               ctx.beginPath();
-               ctx.strokeStyle = 'rgba(0,0,0,0.2)';
-               ctx.lineWidth = 2;
-               ctx.moveTo(state.path[0].x, state.path[0].y);
-               for (let p of state.path) ctx.lineTo(p.x, p.y);
-               ctx.stroke();
-           }
-           drawBall();
-           document.getElementById("msg").textContent =
-               state.message || "Use arrow keys, drag, or tilt. Reach the spiral. Avoid black holes.";
-       }
-       function drawBall() {
-const g = ctx.createRadialGradient(
-               ball.x - ball.r * 0.3,
-               ball.y - ball.r * 0.3,
-               ball.r * 0.1,
-               ball.x, ball.y, ball.r
-           );
-           g.addColorStop(0, '#d0d8e3');
-           g.addColorStop(0.3, '#8a94a2');
-           g.addColorStop(1, '#424955');
-           ctx.fillStyle = g;
-           ctx.beginPath();
-           ctx.arc(ball.x, ball.y, ball.r, 0, Math.PI * 2);
-           ctx.fill();
-// Highlight for shiny metal look
-           ctx.fillStyle = 'rgba(255, 255, 255, 0.5)';
-           ctx.beginPath();
-           ctx.arc(ball.x - ball.r * 0.35, ball.y - ball.r * 0.35, ball.r * 0.15, 0, Math.PI * 2);
-           ctx.fill();
-           ctx.strokeStyle = 'rgba(0, 0, 0, 0.4)';
-           ctx.lineWidth = 1;
-           ctx.stroke();
-       }
-       function drawHole(cx, cy, r) {
-           ctx.fillStyle = 'rgba(255, 255, 255, 0.2)';
-           ctx.beginPath();
-           ctx.arc(cx, cy + 1.5, r, 0, Math.PI * 2);
-           ctx.fill();
-           ctx.fillStyle = 'rgba(0, 0, 0, 0.6)';
-           ctx.beginPath();
-           ctx.arc(cx, cy - 1.5, r, 0, Math.PI * 2);
-           ctx.fill();
-           ctx.fillStyle = '#111';
-           ctx.beginPath();
-           ctx.arc(cx, cy, r, 0, Math.PI * 2);
-           ctx.fill();
-const innerGrad = ctx.createLinearGradient(cx - r, cy - r, cx + r, cy + r);
-           innerGrad.addColorStop(0, '#0a0604');
-           innerGrad.addColorStop(1, '#3a1f0f');
-           ctx.fillStyle = innerGrad;
-           ctx.beginPath();
-           ctx.arc(cx, cy, r, 0, Math.PI * 2);
-           ctx.arc(cx - 1.5, cy - 1.5, r - 3, 0, Math.PI * 2, true);
-           ctx.fill();
-const g = ctx.createRadialGradient(cx - 1.5, cy - 1.5, r * 0.1, cx - 1.5, cy - 1.5, r - 3);
-           g.addColorStop(0, '#000');
-           g.addColorStop(1, 'rgba(0,0,0,0.9)');
-           ctx.fillStyle = g;
-           ctx.beginPath();
-           ctx.arc(cx - 1.5, cy - 1.5, r - 3, 0, Math.PI * 2);
-           ctx.fill();
-           ctx.strokeStyle = 'rgba(0,0,0,0.7)';
-           ctx.lineWidth = 1;
-           ctx.beginPath();
-           ctx.arc(cx, cy, r, 0, Math.PI * 2);
-           ctx.stroke();
-       }
-       function drawSpiral(cx, cy, r) {
-const glow = ctx.createRadialGradient(cx, cy, r * 0.4, cx, cy, r * 1.5);
-           glow.addColorStop(0, 'rgba(255, 215, 0, 0.6)');
-           glow.addColorStop(1, 'rgba(255, 215, 0, 0)');
-           ctx.fillStyle = glow;
-           ctx.beginPath();
-           ctx.arc(cx, cy, r * 1.5, 0, Math.PI * 2);
-           ctx.fill();
-const grad = ctx.createRadialGradient(cx - r * 0.3, cy - r * 0.3, 0, cx, cy, r);
-           grad.addColorStop(0, '#fff4cc');
-           grad.addColorStop(0.5, '#ffc107');
-           grad.addColorStop(1, '#d39e00');
-           ctx.fillStyle = grad;
-           ctx.beginPath();
-           ctx.arc(cx, cy, r, 0, Math.PI * 2);
-           ctx.fill();
-           ctx.beginPath();
-           ctx.arc(cx, cy, r * 0.7, 0, Math.PI * 2);
-           ctx.strokeStyle = 'rgba(255,255,255,0.7)';
-           ctx.lineWidth = 2;
-           ctx.stroke();
-           ctx.save();
-           ctx.translate(cx, cy);
-const timeRot = (performance.now() / 1500) % (Math.PI * 2);
-           ctx.rotate(timeRot);
-           ctx.strokeStyle = '#856404';
-           ctx.lineCap = 'round';
-           ctx.lineWidth = Math.max(2, r * 0.1);
-           ctx.beginPath();
-           for (let i = 0; i < 120; i++) {
-const t = i / 120;
-const a = t * 4 * Math.PI * 2 - Math.PI / 2;
-const rad = r * (1 - t * 0.65);
-const x = Math.cos(a) * rad;
-const y = Math.sin(a) * rad;
-               if (i == 0) ctx.moveTo(x, y);
-               else ctx.lineTo(x, y);
-           }
-           ctx.stroke();
-           ctx.restore();
-       }
-/* ======= Physics and collisions ======= */
-       function physics(dt) {
-let ax = -gravityX * accPower;
-let ay = -gravityY * accPower;
-           if (keys.left) ax -= accPower;
-           if (keys.right) ax += accPower;
-           if (keys.up) ay -= accPower;
-           if (keys.down) ay += accPower;
-           ax += input.ax;
-           ay += input.ay;
-           ball.vx += ax * dt;
-           ball.vy += ay * dt;
-const s = Math.hypot(ball.vx, ball.vy);
-           if (s > maxSpeed) {
-const k = maxSpeed / s;
-               ball.vx *= k;
-               ball.vy *= k;
-           }
-           ball.vx *= Math.pow(friction, dt * 60);
-           ball.vy *= Math.pow(friction, dt * 60);
-           ball.x += ball.vx * dt;
-           ball.y += ball.vy * dt;
-           resolveWallCollisions();
-           for (const h of holeTiles) {
-const cx = (h.x + 0.5) * tileSize, cy = (h.y + 0.5) * tileSize;
-               if (Math.hypot(ball.x - cx, ball.y - cy) < tileSize * 0.35)
-return lost();
-           }
-const gx = (goalPos.x + 0.5) * tileSize, gy = (goalPos.y + 0.5) * tileSize;
-           if (Math.hypot(ball.x - gx, ball.y - gy) < tileSize * 0.35)
-return win();
-           if (state.trace) {
-               if (state.path.length === 0 ||
-                   Math.hypot(ball.x - state.path.at(-1).x, ball.y - state.path.at(-1).y) > 6)
-                   state.path.push({ x: ball.x, y: ball.y });
-               if (state.path.length > 800) state.path.shift();
-           }
-       }
-       function resolveWallCollisions() {
-const minX = Math.floor((ball.x - ball.r) / tileSize);
-const maxX = Math.floor((ball.x + ball.r) / tileSize);
-const minY = Math.floor((ball.y - ball.r) / tileSize);
-const maxY = Math.floor((ball.y + ball.r) / tileSize);
-           for (let ty = minY; ty <= maxY; ty++) {
-               for (let tx = minX; tx <= maxX; tx++) {
-                   if (ty < 0 || ty >= rows || tx < 0 || tx >= cols) continue;
-                   if (MAZE[ty][tx] !== 'W') continue;
-const rx = tx * tileSize, ry = ty * tileSize;
-const closestX = Math.max(rx, Math.min(ball.x, rx + tileSize));
-const closestY = Math.max(ry, Math.min(ball.y, ry + tileSize));
-const dx = ball.x - closestX;
-const dy = ball.y - closestY;
-const dist2 = dx * dx + dy * dy;
-                   if (dist2 < ball.r * ball.r) {
-const dist = Math.sqrt(dist2) || 0.001;
-const overlap = ball.r - dist;
-const nx = dx / dist, ny = dy / dist;
-                       ball.x += nx * overlap;
-                       ball.y += ny * overlap;
-const vdot = ball.vx * nx + ball.vy * ny;
-                       ball.vx -= 1.6 * vdot * nx;
-                       ball.vy -= 1.6 * vdot * ny;
-                       ball.vx *= 0.75;
-                       ball.vy *= 0.75;
-                   }
-               }
-           }
-       }
-/* ======= Game state handlers ======= */
-       function resetBall() {
-           if (!MAZE) return;
-           startPos = findTile('S');
-           goalPos = findTile('G');
-           holeTiles = findAllTiles('O');
-           ball.x = (startPos.x + 0.5) * tileSize;
-           ball.y = (startPos.y + 0.5) * tileSize;
-           ball.vx = 0; ball.vy = 0;
-           state.message = '';
-           state.path = [];
-       }
-       function lost() {
-// Failure: reset ball, pause game, reopen start screen so player can choose again.
-           state.message = 'Fell into a hole! Returning to map selection…';
-           resetBall();
-           state.running = false;
-// show start screen for retry/choice
-           document.getElementById('start-screen').classList.remove('hidden');
-// clear selection highlight so player can pick
-           document.querySelectorAll('.maze-option').forEach(o => o.classList.remove('selected'));
-       }
-       function win() {
-           state.message = 'You reached the spiral! Congratulations.';
-           ball.vx = ball.vy = 0;
-// Pause the game and reopen the start screen so player can choose a new map
-           state.running = false;
-           document.getElementById('start-screen').classList.remove('hidden');
-           document.querySelectorAll('.maze-option').forEach(o => o.classList.remove('selected'));
-           setTimeout(resetBall, 1500);
-       }
-/* ======= Input events (attached once) ======= */
-       window.addEventListener('keydown', e => {
-           if (e.key === "ArrowLeft" || e.key === "a") { keys.left = true; e.preventDefault(); }
-           if (e.key === "ArrowRight" || e.key === "d") { keys.right = true; e.preventDefault(); }
-           if (e.key === "ArrowUp" || e.key === "w") { keys.up = true; e.preventDefault(); }
-           if (e.key === "ArrowDown" || e.key === "s") { keys.down = true; e.preventDefault(); }
-       });
-       window.addEventListener('keyup', e => {
-           if (e.key === "ArrowLeft" || e.key === "a") keys.left = false;
-           if (e.key === "ArrowRight" || e.key === "d") keys.right = false;
-           if (e.key === "ArrowUp" || e.key === "w") keys.up = false;
-           if (e.key === "ArrowDown" || e.key === "s") keys.down = false;
-       });
-/* Pointer drag tilt */
-       canvas.addEventListener('pointerdown', e => {
-           pointer.down = true;
-           pointer.startX = e.clientX;
-           pointer.startY = e.clientY;
-           canvas.setPointerCapture(e.pointerId);
-       });
-       canvas.addEventListener('pointermove', e => {
-           if (!pointer.down) return;
-           input.ax = (e.clientX - pointer.startX) * 12;
-           input.ay = (e.clientY - pointer.startY) * 12;
-       });
-       canvas.addEventListener('pointerup', e => {
-           pointer.down = false;
-           input.ax = input.ay = 0;
-           canvas.releasePointerCapture?.(e.pointerId);
-       });
-/* UI buttons */
-       document.getElementById('restart').onclick = () => { if (MAZE) resetBall(); };
-       document.getElementById('toggle-trace').onclick = () => { state.trace = !state.trace; };
-/* ======= Resize handling ======= */
-       function adjustCanvas() {
-const sz = Math.min(window.innerWidth - 40, window.innerHeight - 40, 720);
-           canvas.width = sz;
-           canvas.height = sz;
-           if (!MAZE) return;
-           tileSize = Math.min(canvas.width / cols, canvas.height / rows);
-           radius = tileSize * 0.35;
-           ball.r = radius;
-       }
-       window.addEventListener('resize', adjustCanvas);
-/* ======= Game loop ======= */
-       function step(now) {
-           if (!state.running) { state.lastTime = now; requestAnimationFrame(step); return; }
-           if (!state.lastTime) state.lastTime = now;
-const dt = Math.min(0.03, (now - state.lastTime) / 1000);
-           state.lastTime = now;
-           physics(dt);
-           draw();
-           requestAnimationFrame(step);
-       }
-/* ======= Start game with chosen maze ======= */
-       function startGameWithMaze(maze) {
-// Prevent starting until motion permission state is resolved.
-           if (!motionAllowed) {
-// Try to request permission now (may succeed because this call may be from a user gesture).
-               requestMotionPermissionFromAPI().then(granted => {
-                   if (granted) {
-// proceed to start
-                       startGameWithMaze(maze);
-                   } else {
-// keep start screen visible and inform user
-                       document.getElementById('start-screen').classList.remove('hidden');
-                   }
-               });
-return;
-           }
-// Use a copy so original MAZES remain unchanged.
-let chosen = maze.map(r => r.slice());
-           if (expertMode) {
-               for (let y = 0; y < chosen.length; y++) {
-                   for (let x = 0; x < chosen[0].length; x++) {
-                       if (chosen[y][x] === 'W') chosen[y][x] = 'O';
-                   }
-               }
-           }
-           MAZE = chosen;
-           rows = MAZE.length;
-           cols = MAZE[0].length;
-           tileSize = Math.min(canvas.width / cols, canvas.height / rows);
-           radius = tileSize * 0.35;
-           ball.r = radius;
-           resetBall();
-           state.running = true;
-           state.lastTime = null;
-           document.getElementById('start-screen').classList.add('hidden');
-// ensure canvas size and tile sizes updated
-           adjustCanvas();
-       }
-/* Start main animation loop (it will wait until state.running is true) */
-       requestAnimationFrame(step);
-/* ======= Start screen selection logic ======= */
-const options = document.querySelectorAll('.maze-option');
-       options.forEach(opt => {
-           opt.addEventListener('click', (ev) => {
-const idx = Number(opt.dataset.index);
-               options.forEach(o => o.classList.remove('selected'));
-               opt.classList.add('selected');
-// small delay to show selection feedback, then start
-               setTimeout(() => {
-// attempt to start; startGameWithMaze will request permission if needed
-                   startGameWithMaze(MAZES[idx]);
-               }, 100);
-           });
-           opt.addEventListener('mouseenter', () => opt.classList.add('hover'));
-           opt.addEventListener('mouseleave', () => opt.classList.remove('hover'));
-       });
-/* Expert mode toggle handler */
-       expertBtn.addEventListener('click', () => {
-           expertMode = !expertMode;
-           if (expertMode) {
-               expertBtn.classList.add('active');
-               expertBtn.textContent = 'Expert Mode: ON';
-           } else {
-               expertBtn.classList.remove('active');
-               expertBtn.textContent = 'Expert Mode: OFF';
-           }
-       });
-/* Enable motion button handler (user gesture) */
-       enableBtn.addEventListener('click', ev => {
-// this click is a user gesture and will allow requestPermission() on iOS
-           requestMotionPermissionFromAPI().then(granted => {
-               if (granted) {
-// no further action needed; user may pick a maze now
-               } else {
-// leave button visible so user can try again
-               }
-           });
-       });
-/* On load: decide if explicit permission is required. If not, attach listeners immediately.
-          If explicit permission is required, show enable button and instruct user. */
-       window.addEventListener('load', () => {
-           for (let i = 0; i < MAZES.length; i++) {
-               drawPreviewToCanvas(document.getElementById('preview-' + i), MAZES[i]);
-           }
-           adjustCanvas();
-const needDevMotion = (typeof DeviceMotionEvent !== 'undefined' && typeof DeviceMotionEvent.requestPermission === 'function');
-const needDevOrient = (typeof DeviceOrientationEvent !== 'undefined' && typeof DeviceOrientationEvent.requestPermission === 'function');
-           if (needDevMotion || needDevOrient) {
-               motionPermissionRequired = true;
-               enableBtn.classList.remove('hidden');
-               permHint.textContent = "Tap 'Enable Motion' to grant tilt access (required on some mobile devices).";
-           } else {
-// not required - allow motion now
-               motionAllowed = true;
-               attachMotionListeners();
-               enableBtn.classList.add('hidden');
-               permHint.textContent = "Motion available (no permission required). Choose a map to start.";
-           }
-       });
+const keys = { left:false, right:false, up:false, down:false };
+const pointer = { down:false, startX:0, startY:0 };
+let gravityX=0, gravityY=0;
+
+/* Bewegungs- und Tiltsteuerung aktivieren */
+function attachMotionListeners() {
+    if (window.DeviceOrientationEvent && typeof DeviceOrientationEvent.requestPermission === 'function') {
+        window.addEventListener("deviceorientation", e => {
+            if (e.gamma==null||e.beta==null) return;
+            gravityX = -e.beta/45;
+            gravityY = e.gamma/45;
+        });
+    } else {
+        // fallback Maus-Tracking
+        window.addEventListener("mousemove", e => {
+            const rect = canvas.getBoundingClientRect();
+            const cx = rect.left + rect.width/2, cy = rect.top + rect.height/2;
+            gravityX = (e.clientX - cx) / (rect.width/2);
+            gravityY = (e.clientY - cy) / (rect.height/2);
+        });
+    }
+}
+
+/* Vorschau-Zeichnung für Startbildschirm */
+function drawPreviewToCanvas(pcan, maze) {
+    const pctx = pcan.getContext('2d');
+    const w = pcan.width, h = pcan.height;
+    pctx.clearRect(0, 0, w, h);
+    const r = maze.length, c = maze[0].length;
+    const ts = Math.min(w/c, h/r);
+    // Hintergrund
+    pctx.fillStyle = "#3d2416";
+    pctx.fillRect(0,0,w,h);
+    // Zeichne Wände (W), Pfad (.), Start (S), Ziel (G), Löcher (O)
+    for (let y=0; y<r; y++) for (let x=0; x<c; x++) {
+        const t = maze[y][x];
+        const px = x*ts + (w - ts*c)/2;
+        const py = y*ts + (h - ts*r)/2;
+        if (t === 'W') {
+            pctx.fillStyle = '#4a2f1d';
+            pctx.fillRect(px, py, ts, ts);
+            pctx.fillStyle = '#5c3a21';
+            pctx.fillRect(px+1, py+1, ts-2, ts-2);
+        } else {
+            pctx.fillStyle = '#cd9a5b';
+            pctx.fillRect(px, py, ts, ts);
+        }
+        if (t==='S') {
+            pctx.fillStyle = '#2b7';
+            pctx.beginPath();
+            pctx.arc(px+ts/2, py+ts/2, ts*0.16, 0, Math.PI*2);
+            pctx.fill();
+        }
+        if (t==='G') {
+            pctx.fillStyle = '#ffc107';
+            pctx.beginPath();
+            pctx.arc(px+ts/2, py+ts/2, ts*0.25, 0, Math.PI*2);
+            pctx.fill();
+            pctx.strokeStyle='#fff'; pctx.lineWidth=1;
+            pctx.stroke();
+        }
+        if (t==='O') {
+            const cx=px+ts/2, cy=py+ts/2, rHole=ts*0.22;
+            pctx.fillStyle='rgba(255,255,255,0.2)';
+            pctx.beginPath(); pctx.arc(cx,cy+1,rHole,0,Math.PI*2); pctx.fill();
+            pctx.fillStyle='rgba(0,0,0,0.6)';
+            pctx.beginPath(); pctx.arc(cx,cy-1,rHole,0,Math.PI*2); pctx.fill();
+            pctx.fillStyle='#000'; pctx.beginPath(); pctx.arc(cx-1,cy-1,rHole-1,0,Math.PI*2); pctx.fill();
+        }
+    }
+}
+// Vorschauskacheln zeichnen
+for (let i=0; i<MAZES.length; i++) {
+    const pcan = document.getElementById('preview-'+i);
+    drawPreviewToCanvas(pcan, MAZES[i]);
+}
+
+/* ======= Zeichnen der Spielwelt ======= */
+function draw() {
+    ctx.clearRect(0,0,canvas.width,canvas.height);
+    if (!MAZE) return;
+    for (let y=0; y<rows; y++) {
+        for (let x=0; x<cols; x++) {
+            const px = x*tileSize, py=y*tileSize;
+            const t = MAZE[y][x];
+            if (t==='W') {
+                // Wand mit Schattierungen
+                ctx.fillStyle = '#4a2f1d';
+                ctx.fillRect(px,py,tileSize,tileSize);
+                // Lichtkante links/oben
+                ctx.fillStyle = 'rgba(255,255,255,0.08)';
+                if (y === 0 || MAZE[y-1][x] !== 'W') {
+                    ctx.beginPath();
+                    ctx.moveTo(px,py);
+                    ctx.lineTo(px+tileSize,py);
+                    ctx.lineTo(px+tileSize-4,py+4);
+                    ctx.lineTo(px+4,py+4);
+                    ctx.fill();
+                }
+                if (x === 0 || MAZE[y][x-1] !== 'W') {
+                    ctx.beginPath();
+                    ctx.moveTo(px,py);
+                    ctx.lineTo(px,py+tileSize);
+                    ctx.lineTo(px+4,py+tileSize-4);
+                    ctx.lineTo(px+4,py+4);
+                    ctx.fill();
+                }
+                // dunkle Kante unten/rechts
+                ctx.fillStyle = 'rgba(0,0,0,0.4)';
+                if (y === rows-1 || MAZE[y+1][x] !== 'W') {
+                    ctx.beginPath();
+                    ctx.moveTo(px,py+tileSize);
+                    ctx.lineTo(px+tileSize,py+tileSize);
+                    ctx.lineTo(px+tileSize-4,py+tileSize-4);
+                    ctx.lineTo(px+4,py+tileSize-4);
+                    ctx.fill();
+                }
+                if (x === cols-1 || MAZE[y][x+1] !== 'W') {
+                    ctx.beginPath();
+                    ctx.moveTo(px+tileSize,py);
+                    ctx.lineTo(px+tileSize,py+tileSize);
+                    ctx.lineTo(px+tileSize-4,py+tileSize-4);
+                    ctx.lineTo(px+tileSize-4,py+4);
+                    ctx.fill();
+                }
+                // Füllung innen
+                ctx.fillStyle = '#5c3a21';
+                ctx.fillRect(px+4, py+4, tileSize-8, tileSize-8);
+            } else {
+                // Bodentextur
+                ctx.fillStyle = '#cd9a5b';
+                ctx.fillRect(px,py,tileSize,tileSize);
+                ctx.fillStyle = '#be8a4b';
+                ctx.fillRect(px+tileSize-1,py,1,tileSize);
+                ctx.fillRect(px,py+tileSize-1,tileSize,1);
+            }
+            if (t==='O') {
+                drawHole(px+tileSize/2, py+tileSize/2, tileSize*0.4);
+            }
+            if (t==='G') {
+                drawSpiral(px+tileSize/2, py+tileSize/2, tileSize*0.42);
+            }
+        }
+    }
+    // Pfadspuren (optional)
+    if (state.trace && state.path.length>1) {
+        ctx.beginPath();
+        ctx.strokeStyle = 'rgba(0,0,0,0.2)';
+        ctx.lineWidth = 2;
+        ctx.moveTo(state.path[0].x, state.path[0].y);
+        for (let p of state.path) ctx.lineTo(p.x, p.y);
+        ctx.stroke();
+    }
+    drawBall();
+    // Nachricht zeigen
+    const msgElem = document.getElementById("msg");
+    msgElem.classList.toggle('hidden', !state.message);
+    msgElem.textContent = state.message || "Nutze Pfeiltasten, Ziehen oder Kippen. Finde die Spirale und meide Löcher.";
+}
+
+/* Kugel zeichnen */
+function drawBall() {
+    const g = ctx.createRadialGradient(ball.x-ball.r*0.3, ball.y-ball.r*0.3, ball.r*0.1, ball.x, ball.y, ball.r);
+    g.addColorStop(0, '#d0d8e3');
+    g.addColorStop(0.3, '#8a94a2');
+    g.addColorStop(1, '#424955');
+    ctx.fillStyle = g;
+    ctx.beginPath();
+    ctx.arc(ball.x, ball.y, ball.r, 0, Math.PI*2);
+    ctx.fill();
+    // Glanzlicht
+    ctx.fillStyle = 'rgba(255,255,255,0.5)';
+    ctx.beginPath();
+    ctx.arc(ball.x-ball.r*0.35, ball.y-ball.r*0.35, ball.r*0.15, 0, Math.PI*2);
+    ctx.fill();
+    ctx.strokeStyle = 'rgba(0,0,0,0.4)';
+    ctx.lineWidth = 1;
+    ctx.stroke();
+}
+/* Loch zeichnen */
+function drawHole(cx, cy, r) {
+    ctx.fillStyle='rgba(255,255,255,0.2)';
+    ctx.beginPath(); ctx.arc(cx,cy+1.5,r,0,Math.PI*2); ctx.fill();
+    ctx.fillStyle='rgba(0,0,0,0.6)';
+    ctx.beginPath(); ctx.arc(cx,cy-1.5,r,0,Math.PI*2); ctx.fill();
+    ctx.fillStyle='#111';
+    ctx.beginPath(); ctx.arc(cx,cy,r,0,Math.PI*2); ctx.fill();
+    const innerGrad = ctx.createLinearGradient(cx-r, cy-r, cx+r, cy+r);
+    innerGrad.addColorStop(0, '#0a0604');
+    innerGrad.addColorStop(1, '#3a1f0f');
+    ctx.fillStyle = innerGrad;
+    ctx.beginPath();
+    ctx.arc(cx,cy,r,0,Math.PI*2);
+    ctx.arc(cx-1.5,cy-1.5,r-3,0,Math.PI*2,true);
+    ctx.fill();
+    const g = ctx.createRadialGradient(cx-1.5, cy-1.5, r*0.1, cx-1.5, cy-1.5, r-3);
+    g.addColorStop(0, '#000');
+    g.addColorStop(1, 'rgba(0,0,0,0.9)');
+    ctx.fillStyle = g;
+    ctx.beginPath();
+    ctx.arc(cx-1.5, cy-1.5, r-3, 0, Math.PI*2);
+    ctx.fill();
+    ctx.strokeStyle = 'rgba(0,0,0,0.7)';
+    ctx.lineWidth = 1;
+    ctx.beginPath();
+    ctx.arc(cx,cy,r,0,Math.PI*2);
+    ctx.stroke();
+}
+/* Spirale zeichnen */
+function drawSpiral(cx, cy, r) {
+    const glow = ctx.createRadialGradient(cx, cy, r*0.4, cx, cy, r*1.5);
+    glow.addColorStop(0, 'rgba(255, 215, 0, 0.6)');
+    glow.addColorStop(1, 'rgba(255, 215, 0, 0)');
+    ctx.fillStyle = glow;
+    ctx.beginPath();
+    ctx.arc(cx,cy,r*1.5,0,Math.PI*2);
+    ctx.fill();
+    const grad = ctx.createRadialGradient(cx-r*0.3, cy-r*0.3, 0, cx, cy, r);
+    grad.addColorStop(0, '#fff4cc');
+    grad.addColorStop(0.5, '#ffc107');
+    grad.addColorStop(1, '#d39e00');
+    ctx.fillStyle = grad;
+    ctx.beginPath();
+    ctx.arc(cx,cy,r,0,Math.PI*2);
+    ctx.fill();
+    ctx.beginPath();
+    ctx.arc(cx,cy,r*0.7,0,Math.PI*2);
+    ctx.strokeStyle = 'rgba(255,255,255,0.7)';
+    ctx.lineWidth = 2;
+    ctx.stroke();
+    // drehende Linien
+    ctx.save();
+    ctx.translate(cx,cy);
+    const timeRot = (performance.now()/1500) % (Math.PI*2);
+    ctx.rotate(timeRot);
+    ctx.strokeStyle = '#856404'; ctx.lineCap='round'; ctx.lineWidth = Math.max(2, r*0.1);
+    ctx.beginPath();
+    for (let i=0; i<120; i++) {
+        const t = i/120;
+        const a = t * 4 * Math.PI * 2 - Math.PI/2;
+        const rad = r * (1 - t * 0.65);
+        const x = Math.cos(a)*rad;
+        const y = Math.sin(a)*rad;
+        if (i === 0) ctx.moveTo(x,y);
+        else ctx.lineTo(x,y);
+    }
+    ctx.stroke();
+    ctx.restore();
+}
+
+/* ======= Physik und Kollisionen ======= */
+function physics(dt) {
+    let ax = -gravityX * accPower, ay = -gravityY * accPower;
+    if (keys.left) ax -= accPower;
+    if (keys.right) ax += accPower;
+    if (keys.up) ay -= accPower;
+    if (keys.down) ay += accPower;
+    ax += input.ax; ay += input.ay;
+    ball.vx += ax*dt;
+    ball.vy += ay*dt;
+    const s = Math.hypot(ball.vx, ball.vy);
+    if (s > maxSpeed) {
+        const k = maxSpeed/s;
+        ball.vx *= k; ball.vy *= k;
+    }
+    ball.vx *= Math.pow(friction, dt*60);
+    ball.vy *= Math.pow(friction, dt*60);
+    ball.x += ball.vx * dt;
+    ball.y += ball.vy * dt;
+    resolveWallCollisions();
+    // Kollisionsprüfung mit Löchern
+    for (const h of holeTiles) {
+        const cx = (h.x+0.5)*tileSize, cy = (h.y+0.5)*tileSize;
+        if (Math.hypot(ball.x-cx, ball.y-cy) < tileSize*0.35) {
+            // Falle in Loch
+            return lost();
+        }
+    }
+    // Zielprüfen
+    const gx = (goalPos.x+0.5)*tileSize, gy = (goalPos.y+0.5)*tileSize;
+    if (Math.hypot(ball.x-gx, ball.y-gy) < tileSize*0.35) {
+        return win();
+    }
+    // Pfadaufzeichnung
+    if (state.trace) {
+        if (state.path.length === 0 ||
+            Math.hypot(ball.x - state.path.at(-1).x, ball.y - state.path.at(-1).y) > 6) {
+            state.path.push({x:ball.x, y:ball.y});
+        }
+        if (state.path.length > 800) state.path.shift();
+    }
+}
+function resolveWallCollisions() {
+    const minX = Math.floor((ball.x - ball.r) / tileSize);
+    const maxX = Math.floor((ball.x + ball.r) / tileSize);
+    const minY = Math.floor((ball.y - ball.r) / tileSize);
+    const maxY = Math.floor((ball.y + ball.r) / tileSize);
+    for (let ty = minY; ty <= maxY; ty++) {
+        for (let tx = minX; tx <= maxX; tx++) {
+            if (ty < 0 || ty >= rows || tx < 0 || tx >= cols) continue;
+            if (MAZE[ty][tx] !== 'W') continue;
+            const rx = tx*tileSize, ry = ty*tileSize;
+            const closestX = Math.max(rx, Math.min(ball.x, rx+tileSize));
+            const closestY = Math.max(ry, Math.min(ball.y, ry+tileSize));
+            const dx = ball.x - closestX, dy = ball.y - closestY;
+            const dist2 = dx*dx + dy*dy;
+            if (dist2 < ball.r*ball.r) {
+                const dist = Math.sqrt(dist2) || 0.001;
+                const overlap = ball.r - dist;
+                const nx = dx/dist, ny = dy/dist;
+                ball.x += nx*overlap;
+                ball.y += ny*overlap;
+                const vdot = ball.vx*nx + ball.vy*ny;
+                ball.vx -= 1.6*vdot*nx;
+                ball.vy -= 1.6*vdot*ny;
+                ball.vx *= 0.75;
+                ball.vy *= 0.75;
+            }
+        }
+    }
+}
+
+/* ======= Spielzustand-Handler ======= */
+function resetBall() {
+    if (!MAZE) return;
+    startPos = findTile('S');
+    goalPos = findTile('G');
+    holeTiles = findAllTiles('O');
+    ball.x = (startPos.x+0.5)*tileSize;
+    ball.y = (startPos.y+0.5)*tileSize;
+    ball.vx = 0; ball.vy = 0;
+    state.message = '';
+    state.path = [];
+}
+function lost() {
+    // Spieler fällt ins Loch: Kugel zurücksetzen, aber Spiel fortsetzen
+    state.message = 'In ein Loch gefallen! Neu versuchen…';
+    resetBall();
+    state.running = true;
+    return;
+}
+function win() {
+    state.message = 'Du hast die Spirale erreicht! Glückwunsch.';
+    ball.vx = ball.vy = 0;
+    state.running = false;
+    // nach kurzer Zeit neu starten
+    setTimeout(resetBall, 1500);
+}
+
+/* ======= Eingaben ======= */
+window.addEventListener('keydown', e => {
+    if (e.key==="ArrowLeft"||e.key==="a") { keys.left=true; e.preventDefault(); }
+    if (e.key==="ArrowRight"||e.key==="d") { keys.right=true; e.preventDefault(); }
+    if (e.key==="ArrowUp"||e.key==="w") { keys.up=true; e.preventDefault(); }
+    if (e.key==="ArrowDown"||e.key==="s") { keys.down=true; e.preventDefault(); }
+});
+window.addEventListener('keyup', e => {
+    if (["ArrowLeft","a"].includes(e.key)) keys.left = false;
+    if (["ArrowRight","d"].includes(e.key)) keys.right = false;
+    if (["ArrowUp","w"].includes(e.key)) keys.up = false;
+    if (["ArrowDown","s"].includes(e.key)) keys.down = false;
+});
+
+/* Pointer-Drag-Steuerung */
+canvas.addEventListener('pointerdown', e => {
+    pointer.down = true;
+    pointer.startX = e.clientX;
+    pointer.startY = e.clientY;
+    canvas.setPointerCapture(e.pointerId);
+});
+canvas.addEventListener('pointermove', e => {
+    if (!pointer.down) return;
+    input.ax = (e.clientX - pointer.startX) * 12;
+    input.ay = (e.clientY - pointer.startY) * 12;
+});
+canvas.addEventListener('pointerup', e => {
+    pointer.down = false;
+    input.ax = input.ay = 0;
+    canvas.releasePointerCapture?.(e.pointerId);
+});
+
+/* UI Buttons */
+document.getElementById('btn-play').onclick = () => {
+    document.getElementById('start-screen').classList.add('hidden');
+    // Labyrinth-Auswahl bleibt sichtbar (wurde im Startscreen integriert)
+};
+document.getElementById('btn-howto').onclick = () => {
+    document.getElementById('howto-screen').classList.remove('hidden');
+};
+document.getElementById('btn-back-howto').onclick = () => {
+    document.getElementById('howto-screen').classList.add('hidden');
+};
+
+// Zurück von Spiel zu Auswahl
+document.getElementById('back-from-game').onclick = () => {
+    state.running = false;
+    document.getElementById('start-screen').classList.remove('hidden');
+    // Auswahl zurücksetzen
+    document.querySelectorAll('.maze-option').forEach(o => o.classList.remove('selected'));
+};
+
+/* ======= Fenstergrößenänderung ======= */
+function adjustCanvas() {
+    const sz = Math.min(window.innerWidth-40, window.innerHeight-40, 720);
+    canvas.width = sz;
+    canvas.height = sz;
+    if (!MAZE) return;
+    tileSize = Math.min(canvas.width/cols, canvas.height/rows);
+    radius = tileSize*0.35;
+    ball.r = radius;
+}
+window.addEventListener('resize', adjustCanvas);
+
+/* ======= Spiel-Loop ======= */
+function step(now) {
+    if (!state.running) { state.lastTime = now; requestAnimationFrame(step); return; }
+    if (!state.lastTime) state.lastTime = now;
+    const dt = Math.min(0.03, (now - state.lastTime) / 1000);
+    state.lastTime = now;
+    physics(dt);
+    draw();
+    requestAnimationFrame(step);
+}
+
+/* ======= Spielstart mit gewähltem Labyrinth ======= */
+function startGameWithMaze(maze) {
+    // Prüfcode: Bewegungsrechte
+    if (!window.DeviceMotionEvent || typeof DeviceMotionEvent.requestPermission !== 'function') {
+        // Keine explizite Erlaubnis nötig -> Gleich starten
+    }
+    // Kopie verwenden
+    let chosen = maze.map(r => r.slice());
+    MAZE = chosen;
+    rows = MAZE.length;
+    cols = MAZE[0].length;
+    tileSize = Math.min(canvas.width/cols, canvas.height/rows);
+    radius = tileSize*0.35;
+    ball.r = radius;
+    resetBall();
+    state.running = true;
+    state.lastTime = null;
+    // Startbildschirm ausblenden
+    document.getElementById('start-screen').classList.add('hidden');
+    adjustCanvas();
+}
+
+/* ======= Init ======= */
+window.addEventListener('load', () => {
+    // Vorschauen neu zeichnen
+    for (let i = 0; i < MAZES.length; i++) {
+        drawPreviewToCanvas(document.getElementById('preview-' + i), MAZES[i]);
+    }
+    adjustCanvas();
+    // Eventlistener für Options
+    const options = document.querySelectorAll('.maze-option');
+    options.forEach(opt => {
+        opt.addEventListener('click', () => {
+            options.forEach(o => o.classList.remove('selected'));
+            opt.classList.add('selected');
+            const idx = Number(opt.dataset.index);
+            setTimeout(() => {
+                startGameWithMaze(MAZES[idx]);
+            }, 100);
+        });
+    });
+    // Animation starten
+    requestAnimationFrame(step);
+});
 </script>
 </body>
 </html>
