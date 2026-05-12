@@ -1,782 +1,801 @@
 <!doctype html>
-<html lang="de">
+<html lang="en">
 <head>
-<meta charset="utf-8" />
+<meta charset="utf-8">
 <title>Marble Maze</title>
-<meta name="viewport" content="width=device-width, initial-scale=1" />
+<meta name="viewport" content="width=device-width, initial-scale=1">
+
 <style>
-    /* Basis-Stile */
-    html, body {
-        height: 100%;
-        margin: 0;
-        background: radial-gradient(circle at center, #5c4535 0%, #20140c 100%);
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        font-family: system-ui, Segoe UI, Roboto, sans-serif;
-        color: #fff;
-    }
-    #game {
-        position: relative;
-    }
-    canvas {
-        background: #3d2416;
-        display: block;
-        border: 8px solid #2a1a10;
-        border-radius: 8px;
-        box-shadow: 0 16px 40px rgba(0, 0, 0, 0.6), inset 0 0 40px rgba(0, 0, 0, 1);
-    }
-    /* Benutzer-Oberfläche */
-    #ui { position: absolute; left: 8px; top: 8px; color: #fff; display: flex; gap: 8px; }
-    button { background: #3d2416; color: #fff; border: none; padding: 6px 10px; border-radius: 6px; cursor: pointer; }
-    #msg { position: absolute; right: 8px; top: 8px; background: rgba(0,0,0,0.6); color: #fff; padding: 8px 12px; border-radius: 6px; }
-    #legend { position: absolute; left: 8px; bottom: 8px; background: rgba(0,0,0,0.6); color: #fff; padding: 6px 10px; border-radius: 6px; font-size: 13px; }
-    /* Versteckt-Klassen */
-    .hidden { display: none !important; }
 
-    /* START BILDSCHIRM */
-    #start-screen {
-        position: fixed;
-        inset: 0;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        background: linear-gradient(rgba(0,0,0,0.45), rgba(0,0,0,0.45));
-        z-index: 1000;
-    }
-    #start-panel {
-        background: linear-gradient(135deg, #f7f3ec, #e2d7c5);
-        padding: 24px;
-        border-radius: 16px;
-        box-shadow: 0 20px 50px rgba(0,0,0,0.6);
-        display: flex;
-        flex-direction: column;
-        gap: 24px;
-        align-items: center;
-        border: 1px solid rgba(255,255,255,0.6);
-    }
-    #start-title {
-        font-size: 2em;
-        font-weight: bold;
-        color: #cd9a5b;
-        text-shadow: 2px 2px #2a1a10;
-    }
-    #start-buttons {
-        display: flex;
-        gap: 16px;
-    }
-    .start-btn {
-        font-size: 1em;
-        padding: 12px 24px;
-        background: #5c3a21;
-        border: none;
-        border-radius: 12px;
-        color: #fff;
-        cursor: pointer;
-        box-shadow: 0 6px 12px rgba(0,0,0,0.1);
-        transition: transform 0.2s, box-shadow 0.2s;
-    }
-    .start-btn:hover {
-        transform: translateY(-4px);
-        box-shadow: 0 12px 24px rgba(0,0,0,0.2);
-    }
-    /* Labyrinth-Auswahl im Startbereich */
-    .maze-row {
-        display: flex;
-        gap: 16px;
-    }
-    .maze-option {
-        width: 150px;
-        text-align: center;
-        cursor: pointer;
-        border-radius: 12px;
-        padding: 12px;
-        transition: transform .2s ease;
-        background: #ffffff;
-        box-shadow: 0 6px 12px rgba(0,0,0,0.1);
-        border: 1px solid #e0d0b8;
-    }
-    .maze-option:hover {
-        transform: translateY(-6px);
-        box-shadow: 0 16px 30px rgba(0,0,0,0.15);
-        border-color: #cd9a5b;
-    }
-    .preview {
-        width: 120px; height: 120px;
-        border: 2px solid #5c3a21;
-        border-radius: 6px;
-        background: #3d2416;
-        margin: 4px auto 12px;
-        display: block;
-        box-shadow: inset 0 0 10px rgba(0,0,0,0.5);
-    }
-    .difficulty {
-        font-weight: 700;
-        margin-top: 6px;
-    }
-    .hint {
-        font-size: 13px;
-        color: #444;
-        margin-top: 6px;
-    }
-    .selected {
-        outline: 3px solid #cd9a5b;
-        box-shadow: 0 10px 30px rgba(205,154,91,0.3);
-    }
-    /* Zurück-Button (Pfeil) */
-    .back-btn {
-        position: absolute;
-        left: 8px; top: 8px;
-        background: rgba(0,0,0,0.6);
-        color: #fff;
-        border: none;
-        padding: 8px 12px;
-        border-radius: 6px;
-        cursor: pointer;
-        font-size: 1em;
-    }
+html,body{
+    margin:0;
+    height:100%;
+    overflow:hidden;
+    font-family:system-ui;
+    background:
+    radial-gradient(circle at center,#5c4535 0%,#20140c 100%);
+}
 
-    /* ANLEITUNGSGRUNDSTÜCK */
-    #howto-screen {
-        position: fixed;
-        inset: 0;
-        background: linear-gradient(rgba(0,0,0,0.7), rgba(0,0,0,0.7));
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        z-index: 1000;
+/* GAME */
+
+#game{
+    position:absolute;
+    inset:0;
+    display:flex;
+    justify-content:center;
+    align-items:center;
+}
+
+canvas{
+    background:#3d2416;
+    border:8px solid #2a1a10;
+    border-radius:14px;
+    box-shadow:
+    0 20px 50px rgba(0,0,0,.6),
+    inset 0 0 50px rgba(0,0,0,.8);
+}
+
+/* GLOBAL SCREENS */
+
+.screen{
+    position:absolute;
+    inset:0;
+    display:flex;
+    justify-content:center;
+    align-items:center;
+    background:rgba(0,0,0,.45);
+    backdrop-filter:blur(8px);
+    z-index:100;
+    transition:.35s;
+}
+
+.hidden{
+    opacity:0;
+    pointer-events:none;
+}
+
+/* PANELS */
+
+.panel{
+    width:min(900px,92%);
+    background:linear-gradient(135deg,#f7f3ec,#e0d4c3);
+    border-radius:24px;
+    padding:40px;
+    box-shadow:0 20px 60px rgba(0,0,0,.5);
+    text-align:center;
+    animation:fadeIn .4s ease;
+}
+
+@keyframes fadeIn{
+    from{
+        opacity:0;
+        transform:translateY(20px);
     }
-    #howto-panel {
-        background: #f7f3ec;
-        color: #000;
-        padding: 24px;
-        border-radius: 16px;
-        max-width: 600px;
-        box-shadow: 0 10px 30px rgba(0,0,0,0.5);
-        position: relative;
-        font-size: 14px;
+    to{
+        opacity:1;
+        transform:none;
     }
-    #howto-panel h2 {
-        margin-top: 0;
-        color: #5c3a21;
-    }
-    #howto-panel ul {
-        margin-left: 1.2em;
-    }
-    /* Responsive Text */
-    @media (max-width: 480px) {
-        #howto-panel { width: 90%; }
-        #start-panel { width: 90%; padding: 16px; }
-        #start-title { font-size: 1.5em; }
-        .start-btn { padding: 10px 20px; font-size: 0.9em; }
-    }
+}
+
+.logo{
+    font-size:64px;
+    margin-bottom:10px;
+}
+
+.title{
+    font-size:60px;
+    font-weight:900;
+    color:#3d2416;
+    margin-bottom:12px;
+}
+
+.subtitle{
+    color:#5b4636;
+    margin-bottom:40px;
+    font-size:18px;
+}
+
+.big-btn{
+    width:260px;
+    padding:18px;
+    margin:10px auto;
+    border:none;
+    border-radius:18px;
+    font-size:22px;
+    font-weight:700;
+    cursor:pointer;
+    transition:.25s;
+    display:block;
+}
+
+.big-btn:hover{
+    transform:translateY(-4px);
+}
+
+.play-btn{
+    background:#5e9d55;
+    color:white;
+}
+
+.help-btn{
+    background:#3d2416;
+    color:white;
+}
+
+.back-btn{
+    position:absolute;
+    top:20px;
+    left:20px;
+    border:none;
+    width:54px;
+    height:54px;
+    border-radius:50%;
+    background:#3d2416;
+    color:white;
+    font-size:28px;
+    cursor:pointer;
+}
+
+/* MAZE SELECT */
+
+.maze-row{
+    display:flex;
+    gap:24px;
+    justify-content:center;
+    flex-wrap:wrap;
+}
+
+.maze-option{
+    background:white;
+    padding:16px;
+    border-radius:18px;
+    width:180px;
+    cursor:pointer;
+    transition:.25s;
+}
+
+.maze-option:hover{
+    transform:translateY(-6px);
+}
+
+.preview{
+    width:140px;
+    height:140px;
+    border-radius:10px;
+    background:#3d2416;
+    border:2px solid #5c3a21;
+}
+
+.difficulty{
+    margin-top:10px;
+    font-size:24px;
+    font-weight:800;
+}
+
+/* HOW TO */
+
+.help-grid{
+    display:grid;
+    grid-template-columns:repeat(auto-fit,minmax(240px,1fr));
+    gap:20px;
+    margin-top:30px;
+    text-align:left;
+}
+
+.help-card{
+    background:white;
+    border-radius:16px;
+    padding:18px;
+}
+
+.help-card h3{
+    margin-top:0;
+}
+
+/* TOP UI */
+
+#top-ui{
+    position:absolute;
+    top:20px;
+    left:20px;
+    z-index:20;
+    display:flex;
+    gap:10px;
+}
+
+.small-btn{
+    background:#3d2416;
+    color:white;
+    border:none;
+    padding:12px 16px;
+    border-radius:12px;
+    cursor:pointer;
+}
+
+#msg{
+    position:absolute;
+    top:20px;
+    right:20px;
+    background:rgba(0,0,0,.6);
+    color:white;
+    padding:14px 18px;
+    border-radius:14px;
+    z-index:20;
+}
+
 </style>
 </head>
+
 <body>
-    <!-- Startbildschirm -->
-    <div id="start-screen">
-        <div id="start-panel">
-            <div id="start-title">Marble Maze</div>
-            <div id="start-buttons">
-                <button id="btn-play" class="start-btn">Play</button>
-                <button id="btn-howto" class="start-btn">How To Play</button>
-            </div>
-            <!-- Labyrinth-Auswahl -->
-            <div class="maze-row">
-                <div class="maze-option" data-index="0" title="Einfach">
-                    <canvas class="preview" id="preview-0" width="120" height="120"></canvas>
-                    <div class="difficulty">Easy</div>
-                    <div class="hint">Anfänger</div>
-                </div>
-                <div class="maze-option" data-index="1" title="Mittel">
-                    <canvas class="preview" id="preview-1" width="120" height="120"></canvas>
-                    <div class="difficulty">Medium</div>
-                    <div class="hint">Herausfordernd</div>
-                </div>
-                <div class="maze-option" data-index="2" title="Schwer">
-                    <canvas class="preview" id="preview-2" width="120" height="120"></canvas>
-                    <div class="difficulty">Hard</div>
-                    <div class="hint">Experte</div>
-                </div>
-            </div>
-        </div>
+
+<div id="game">
+    <canvas id="c" width="720" height="720"></canvas>
+
+    <div id="top-ui" class="hidden">
+        <button class="small-btn" id="backToMazes">← Mazes</button>
+        <button class="small-btn" id="restart">Restart</button>
     </div>
 
-    <!-- Spielbereich -->
-    <div id="game">
-        <canvas id="c" width="720" height="720"></canvas>
-        <div id="ui" class="hidden">
-            <!-- Hier könnten Zusatz-Buttons (z.B. Trace) eingefügt werden -->
-        </div>
-        <button id="back-from-game" class="back-btn hidden">&#8592; Zurück</button>
-    </div>
-    <div id="msg" class="hidden"></div>
-    <div id="legend" class="hidden"></div>
+    <div id="msg">Reach the spiral. Avoid holes.</div>
+</div>
 
-    <!-- Anleitungsbildschirm -->
-    <div id="howto-screen" class="hidden">
-        <div id="howto-panel">
-            <h2>Spielanleitung</h2>
-            <p>Steuere die Kugel mit den Pfeiltasten oder indem du das Gerät kippst (Tilt). Du kannst die Kugel auch per Mauszeiger ziehen und dann loslassen.</p>
-            <ul>
-                <li><strong>Ziel:</strong> Führe die Kugel durch das Labyrinth zur gelben Spirale (Ziel).</li>
-                <li><strong>Löcher:</strong> Schwarze Löcher sind Hindernisse. Wenn du hineinfällst, wird die Kugel zum Startpunkt zurückgesetzt.</li>
-                <li><strong>Respawn:</strong> Nach einem Sturz spawnst du einfach am Anfang des aktuellen Levels neu. Du kommst nicht zurück zur Map-Auswahl.</li>
-                <li><strong>Tipps:</strong> Pass auf deine Geschwindigkeit auf! Nutze kleine Bewegungen, um präzise durch enge Stellen zu kommen.</li>
-            </ul>
-            <button id="btn-back-howto" class="start-btn" style="margin-top:16px;">Zurück</button>
+<!-- START SCREEN -->
+
+<div class="screen" id="startScreen">
+    <div class="panel">
+
+        <div class="logo">🌀</div>
+
+        <div class="title">Marble Maze</div>
+
+        <div class="subtitle">
+            Tilt • Roll • Escape the Maze
         </div>
+
+        <button class="big-btn play-btn" id="playBtn">
+            ▶ Play
+        </button>
+
+        <button class="big-btn help-btn" id="howBtn">
+            ❔ How To Play
+        </button>
+
     </div>
+</div>
+
+<!-- HOW TO -->
+
+<div class="screen hidden" id="helpScreen">
+
+    <button class="back-btn" id="backFromHelp">←</button>
+
+    <div class="panel">
+
+        <h1>How To Play</h1>
+
+        <div class="help-grid">
+
+            <div class="help-card">
+                <h3>🎮 Controls</h3>
+                <p>
+                    Tilt your device or use arrow keys
+                    to move the marble.
+                </p>
+            </div>
+
+            <div class="help-card">
+                <h3>🎯 Goal</h3>
+                <p>
+                    Reach the glowing spiral at the end
+                    of the maze.
+                </p>
+            </div>
+
+            <div class="help-card">
+                <h3>🕳 Holes</h3>
+                <p>
+                    Falling into holes resets your marble
+                    to the start position.
+                </p>
+            </div>
+
+            <div class="help-card">
+                <h3>💡 Tips</h3>
+                <p>
+                    Move slowly near corners and avoid
+                    building too much speed.
+                </p>
+            </div>
+
+        </div>
+
+    </div>
+</div>
+
+<!-- MAZE SELECT -->
+
+<div class="screen hidden" id="mazeScreen">
+
+    <button class="back-btn" id="backToMenu">←</button>
+
+    <div class="panel">
+
+        <h1>Select Difficulty</h1>
+
+        <div class="maze-row">
+
+            <div class="maze-option" data-maze="0">
+                <canvas class="preview" id="preview0" width="140" height="140"></canvas>
+                <div class="difficulty">Easy</div>
+            </div>
+
+            <div class="maze-option" data-maze="1">
+                <canvas class="preview" id="preview1" width="140" height="140"></canvas>
+                <div class="difficulty">Medium</div>
+            </div>
+
+            <div class="maze-option" data-maze="2">
+                <canvas class="preview" id="preview2" width="140" height="140"></canvas>
+                <div class="difficulty">Hard</div>
+            </div>
+
+        </div>
+
+    </div>
+</div>
 
 <script>
-/* ======= Labyrinth-Definitionen (3 Level) ======= */
-/* Einfach */
+
+/* =========================
+   MAZES
+========================= */
+
 const MAZE_EASY = [
-    "W W W W W W W W W W W W W".split(' '),
-    "W S . . . . . . . . . . O".split(' '),
-    "W . W W W . W W W W W . W".split(' '),
-    "W . . . W . W W W W . . W".split(' '),
-    "W W W . W . . . . O . W W".split(' '),
-    "W . . . W W W W . W . W W".split(' '),
-    "W . W W W O . . . W . . W".split(' '),
-    "W . . . . W . W W W O . W".split(' '),
-    "W O W W . W . W W W . . W".split(' '),
-    "W . . . . W . . . . . W W".split(' '),
-    "W . W W W W . W . W W W W".split(' '),
-    "W . . . . . . O . . . G W".split(' '),
-    "W W W W W W W W O W W W W".split(' ')
-];
-/* Mittel */
+"W W W W W",
+"W S . O W",
+"W . . . W",
+"W . O G W",
+"W W W W W"
+].map(r=>r.split(" "));
+
 const MAZE_MED = [
-    "W W W W W O W W W W W W W".split(' '),
-    "W S . . W . . . . . . O W".split(' '),
-    "W W W . W . W W W W . W W".split(' '),
-    "O . . . . . . O W W . . W".split(' '),
-    "W . W O W W . W W W O . W".split(' '),
-    "W . . . . O . . . O . . W".split(' '),
-    "W O W W . W O W . W . O W".split(' '),
-    "W W W W . W W W . W . W W".split(' '),
-    "O . . . . . . . . . . O W".split(' '),
-    "W . W W O W W W O W O W W".split(' '),
-    "W . . . . O . . . O W W W".split(' '),
-    "W O W W . . . W . . . G W".split(' '),
-    "W W W W W W W W W W W W W".split(' ')
-];
-/* Schwer */
+"W W W W W W",
+"W S . . O W",
+"W . W . . W",
+"W . O . . W",
+"W . . . G W",
+"W W W W W W"
+].map(r=>r.split(" "));
+
 const MAZE_HARD = [
-    "W W W W W O W W W W W W W".split(' '),
-    "W S . . O . . . . O W W W".split(' '),
-    "W W W . W . W W . . . . O".split(' '),
-    "O . . . . . O O O W W . W".split(' '),
-    "W . W O O W W . . . . . W".split(' '),
-    "W . W O . . . . O . W O W".split(' '),
-    "W . W . . O W W O . . . O".split(' '),
-    "W . . . O O . . . O O . W".split(' '),
-    "W O W O . . . O . . . . W".split(' '),
-    "O . . . . O O W W O W O W".split(' '),
-    "W . W W O . . . O . . . O".split(' '),
-    "W . . . . . O . . . O G W".split(' '),
-    "W O W W W W W O W W W W W".split(' ')
-];
-const MAZES = [MAZE_EASY, MAZE_MED, MAZE_HARD];
+"W W W W W W W",
+"W S . O . . W",
+"W . W W . O W",
+"W . . O . . W",
+"W O . . W . W",
+"W . . . . G W",
+"W W W W W W W"
+].map(r=>r.split(" "));
 
-/* ======= Spiel-Variablen ======= */
-let MAZE = null;
-let canvas = document.getElementById('c');
-let ctx = canvas.getContext('2d');
-let rows = 0, cols = 0, tileSize = 40, radius = 12;
-let startPos, goalPos, holeTiles = [];
+const MAZES=[MAZE_EASY,MAZE_MED,MAZE_HARD];
 
-function findTile(ch) {
-    for (let y = 0; y < rows; y++) 
-        for (let x = 0; x < cols; x++) 
-            if (MAZE[y][x] === ch) return { x, y };
+/* =========================
+   CANVAS
+========================= */
+
+const canvas=document.getElementById("c");
+const ctx=canvas.getContext("2d");
+
+let MAZE;
+let rows;
+let cols;
+let tileSize;
+
+const ball={
+    x:0,
+    y:0,
+    vx:0,
+    vy:0,
+    r:12
+};
+
+let startPos;
+let goalPos;
+let holes=[];
+
+const keys={
+    left:false,
+    right:false,
+    up:false,
+    down:false
+};
+
+let gravityX=0;
+let gravityY=0;
+
+let running=false;
+
+/* =========================
+   HELPERS
+========================= */
+
+function findTile(ch){
+    for(let y=0;y<rows;y++){
+        for(let x=0;x<cols;x++){
+            if(MAZE[y][x]===ch){
+                return {x,y};
+            }
+        }
+    }
 }
-function findAllTiles(ch) {
-    const out = [];
-    for (let y = 0; y < rows; y++) 
-        for (let x = 0; x < cols; x++) 
-            if (MAZE[y][x] === ch) out.push({ x, y });
+
+function findAll(ch){
+    const out=[];
+
+    for(let y=0;y<rows;y++){
+        for(let x=0;x<cols;x++){
+            if(MAZE[y][x]===ch){
+                out.push({x,y});
+            }
+        }
+    }
+
     return out;
 }
 
-/* Ball und Zustand */
-let ball = { x: 0, y: 0, vx: 0, vy: 0, r: 10 };
-const state = { running: false, trace: false, message: '', path: [], lastTime: null };
+/* =========================
+   RESET
+========================= */
 
-/* Physikparameter */
-const friction = 0.98, maxSpeed = 800, accPower = 1800;
+function resetBall(){
 
-/* Eingabe */
-let input = { ax: 0, ay: 0 };
-const keys = { left:false, right:false, up:false, down:false };
-const pointer = { down:false, startX:0, startY:0 };
-let gravityX=0, gravityY=0;
+    startPos=findTile("S");
+    goalPos=findTile("G");
+    holes=findAll("O");
 
-/* Bewegungs- und Tiltsteuerung aktivieren */
-function attachMotionListeners() {
-    if (window.DeviceOrientationEvent && typeof DeviceOrientationEvent.requestPermission === 'function') {
-        window.addEventListener("deviceorientation", e => {
-            if (e.gamma==null||e.beta==null) return;
-            gravityX = -e.beta/45;
-            gravityY = e.gamma/45;
-        });
-    } else {
-        // fallback Maus-Tracking
-        window.addEventListener("mousemove", e => {
-            const rect = canvas.getBoundingClientRect();
-            const cx = rect.left + rect.width/2, cy = rect.top + rect.height/2;
-            gravityX = (e.clientX - cx) / (rect.width/2);
-            gravityY = (e.clientY - cy) / (rect.height/2);
-        });
-    }
+    ball.x=(startPos.x+.5)*tileSize;
+    ball.y=(startPos.y+.5)*tileSize;
+
+    ball.vx=0;
+    ball.vy=0;
 }
 
-/* Vorschau-Zeichnung für Startbildschirm */
-function drawPreviewToCanvas(pcan, maze) {
-    const pctx = pcan.getContext('2d');
-    const w = pcan.width, h = pcan.height;
-    pctx.clearRect(0, 0, w, h);
-    const r = maze.length, c = maze[0].length;
-    const ts = Math.min(w/c, h/r);
-    // Hintergrund
-    pctx.fillStyle = "#3d2416";
-    pctx.fillRect(0,0,w,h);
-    // Zeichne Wände (W), Pfad (.), Start (S), Ziel (G), Löcher (O)
-    for (let y=0; y<r; y++) for (let x=0; x<c; x++) {
-        const t = maze[y][x];
-        const px = x*ts + (w - ts*c)/2;
-        const py = y*ts + (h - ts*r)/2;
-        if (t === 'W') {
-            pctx.fillStyle = '#4a2f1d';
-            pctx.fillRect(px, py, ts, ts);
-            pctx.fillStyle = '#5c3a21';
-            pctx.fillRect(px+1, py+1, ts-2, ts-2);
-        } else {
-            pctx.fillStyle = '#cd9a5b';
-            pctx.fillRect(px, py, ts, ts);
-        }
-        if (t==='S') {
-            pctx.fillStyle = '#2b7';
-            pctx.beginPath();
-            pctx.arc(px+ts/2, py+ts/2, ts*0.16, 0, Math.PI*2);
-            pctx.fill();
-        }
-        if (t==='G') {
-            pctx.fillStyle = '#ffc107';
-            pctx.beginPath();
-            pctx.arc(px+ts/2, py+ts/2, ts*0.25, 0, Math.PI*2);
-            pctx.fill();
-            pctx.strokeStyle='#fff'; pctx.lineWidth=1;
-            pctx.stroke();
-        }
-        if (t==='O') {
-            const cx=px+ts/2, cy=py+ts/2, rHole=ts*0.22;
-            pctx.fillStyle='rgba(255,255,255,0.2)';
-            pctx.beginPath(); pctx.arc(cx,cy+1,rHole,0,Math.PI*2); pctx.fill();
-            pctx.fillStyle='rgba(0,0,0,0.6)';
-            pctx.beginPath(); pctx.arc(cx,cy-1,rHole,0,Math.PI*2); pctx.fill();
-            pctx.fillStyle='#000'; pctx.beginPath(); pctx.arc(cx-1,cy-1,rHole-1,0,Math.PI*2); pctx.fill();
-        }
-    }
-}
-// Vorschauskacheln zeichnen
-for (let i=0; i<MAZES.length; i++) {
-    const pcan = document.getElementById('preview-'+i);
-    drawPreviewToCanvas(pcan, MAZES[i]);
+/* =========================
+   START GAME
+========================= */
+
+function startMaze(index){
+
+    MAZE=MAZES[index];
+
+    rows=MAZE.length;
+    cols=MAZE[0].length;
+
+    tileSize=canvas.width/cols;
+
+    resetBall();
+
+    running=true;
+
+    hideAllScreens();
+
+    document.getElementById("top-ui")
+    .classList.remove("hidden");
 }
 
-/* ======= Zeichnen der Spielwelt ======= */
-function draw() {
+/* =========================
+   DRAW
+========================= */
+
+function draw(){
+
     ctx.clearRect(0,0,canvas.width,canvas.height);
-    if (!MAZE) return;
-    for (let y=0; y<rows; y++) {
-        for (let x=0; x<cols; x++) {
-            const px = x*tileSize, py=y*tileSize;
-            const t = MAZE[y][x];
-            if (t==='W') {
-                // Wand mit Schattierungen
-                ctx.fillStyle = '#4a2f1d';
-                ctx.fillRect(px,py,tileSize,tileSize);
-                // Lichtkante links/oben
-                ctx.fillStyle = 'rgba(255,255,255,0.08)';
-                if (y === 0 || MAZE[y-1][x] !== 'W') {
-                    ctx.beginPath();
-                    ctx.moveTo(px,py);
-                    ctx.lineTo(px+tileSize,py);
-                    ctx.lineTo(px+tileSize-4,py+4);
-                    ctx.lineTo(px+4,py+4);
-                    ctx.fill();
-                }
-                if (x === 0 || MAZE[y][x-1] !== 'W') {
-                    ctx.beginPath();
-                    ctx.moveTo(px,py);
-                    ctx.lineTo(px,py+tileSize);
-                    ctx.lineTo(px+4,py+tileSize-4);
-                    ctx.lineTo(px+4,py+4);
-                    ctx.fill();
-                }
-                // dunkle Kante unten/rechts
-                ctx.fillStyle = 'rgba(0,0,0,0.4)';
-                if (y === rows-1 || MAZE[y+1][x] !== 'W') {
-                    ctx.beginPath();
-                    ctx.moveTo(px,py+tileSize);
-                    ctx.lineTo(px+tileSize,py+tileSize);
-                    ctx.lineTo(px+tileSize-4,py+tileSize-4);
-                    ctx.lineTo(px+4,py+tileSize-4);
-                    ctx.fill();
-                }
-                if (x === cols-1 || MAZE[y][x+1] !== 'W') {
-                    ctx.beginPath();
-                    ctx.moveTo(px+tileSize,py);
-                    ctx.lineTo(px+tileSize,py+tileSize);
-                    ctx.lineTo(px+tileSize-4,py+tileSize-4);
-                    ctx.lineTo(px+tileSize-4,py+4);
-                    ctx.fill();
-                }
-                // Füllung innen
-                ctx.fillStyle = '#5c3a21';
-                ctx.fillRect(px+4, py+4, tileSize-8, tileSize-8);
-            } else {
-                // Bodentextur
-                ctx.fillStyle = '#cd9a5b';
-                ctx.fillRect(px,py,tileSize,tileSize);
-                ctx.fillStyle = '#be8a4b';
-                ctx.fillRect(px+tileSize-1,py,1,tileSize);
-                ctx.fillRect(px,py+tileSize-1,tileSize,1);
+
+    if(!MAZE) return;
+
+    for(let y=0;y<rows;y++){
+        for(let x=0;x<cols;x++){
+
+            const px=x*tileSize;
+            const py=y*tileSize;
+
+            const t=MAZE[y][x];
+
+            if(t==="W"){
+                ctx.fillStyle="#4a2f1d";
+            }else{
+                ctx.fillStyle="#cd9a5b";
             }
-            if (t==='O') {
-                drawHole(px+tileSize/2, py+tileSize/2, tileSize*0.4);
+
+            ctx.fillRect(px,py,tileSize,tileSize);
+
+            if(t==="O"){
+
+                ctx.fillStyle="black";
+
+                ctx.beginPath();
+                ctx.arc(
+                    px+tileSize/2,
+                    py+tileSize/2,
+                    tileSize*.25,
+                    0,
+                    Math.PI*2
+                );
+                ctx.fill();
             }
-            if (t==='G') {
-                drawSpiral(px+tileSize/2, py+tileSize/2, tileSize*0.42);
+
+            if(t==="G"){
+
+                ctx.fillStyle="gold";
+
+                ctx.beginPath();
+                ctx.arc(
+                    px+tileSize/2,
+                    py+tileSize/2,
+                    tileSize*.25,
+                    0,
+                    Math.PI*2
+                );
+                ctx.fill();
             }
+
         }
     }
-    // Pfadspuren (optional)
-    if (state.trace && state.path.length>1) {
-        ctx.beginPath();
-        ctx.strokeStyle = 'rgba(0,0,0,0.2)';
-        ctx.lineWidth = 2;
-        ctx.moveTo(state.path[0].x, state.path[0].y);
-        for (let p of state.path) ctx.lineTo(p.x, p.y);
-        ctx.stroke();
-    }
-    drawBall();
-    // Nachricht zeigen
-    const msgElem = document.getElementById("msg");
-    msgElem.classList.toggle('hidden', !state.message);
-    msgElem.textContent = state.message || "Nutze Pfeiltasten, Ziehen oder Kippen. Finde die Spirale und meide Löcher.";
+
+    /* BALL */
+
+    ctx.fillStyle="#d6dbe3";
+
+    ctx.beginPath();
+    ctx.arc(ball.x,ball.y,ball.r,0,Math.PI*2);
+    ctx.fill();
 }
 
-/* Kugel zeichnen */
-function drawBall() {
-    const g = ctx.createRadialGradient(ball.x-ball.r*0.3, ball.y-ball.r*0.3, ball.r*0.1, ball.x, ball.y, ball.r);
-    g.addColorStop(0, '#d0d8e3');
-    g.addColorStop(0.3, '#8a94a2');
-    g.addColorStop(1, '#424955');
-    ctx.fillStyle = g;
-    ctx.beginPath();
-    ctx.arc(ball.x, ball.y, ball.r, 0, Math.PI*2);
-    ctx.fill();
-    // Glanzlicht
-    ctx.fillStyle = 'rgba(255,255,255,0.5)';
-    ctx.beginPath();
-    ctx.arc(ball.x-ball.r*0.35, ball.y-ball.r*0.35, ball.r*0.15, 0, Math.PI*2);
-    ctx.fill();
-    ctx.strokeStyle = 'rgba(0,0,0,0.4)';
-    ctx.lineWidth = 1;
-    ctx.stroke();
-}
-/* Loch zeichnen */
-function drawHole(cx, cy, r) {
-    ctx.fillStyle='rgba(255,255,255,0.2)';
-    ctx.beginPath(); ctx.arc(cx,cy+1.5,r,0,Math.PI*2); ctx.fill();
-    ctx.fillStyle='rgba(0,0,0,0.6)';
-    ctx.beginPath(); ctx.arc(cx,cy-1.5,r,0,Math.PI*2); ctx.fill();
-    ctx.fillStyle='#111';
-    ctx.beginPath(); ctx.arc(cx,cy,r,0,Math.PI*2); ctx.fill();
-    const innerGrad = ctx.createLinearGradient(cx-r, cy-r, cx+r, cy+r);
-    innerGrad.addColorStop(0, '#0a0604');
-    innerGrad.addColorStop(1, '#3a1f0f');
-    ctx.fillStyle = innerGrad;
-    ctx.beginPath();
-    ctx.arc(cx,cy,r,0,Math.PI*2);
-    ctx.arc(cx-1.5,cy-1.5,r-3,0,Math.PI*2,true);
-    ctx.fill();
-    const g = ctx.createRadialGradient(cx-1.5, cy-1.5, r*0.1, cx-1.5, cy-1.5, r-3);
-    g.addColorStop(0, '#000');
-    g.addColorStop(1, 'rgba(0,0,0,0.9)');
-    ctx.fillStyle = g;
-    ctx.beginPath();
-    ctx.arc(cx-1.5, cy-1.5, r-3, 0, Math.PI*2);
-    ctx.fill();
-    ctx.strokeStyle = 'rgba(0,0,0,0.7)';
-    ctx.lineWidth = 1;
-    ctx.beginPath();
-    ctx.arc(cx,cy,r,0,Math.PI*2);
-    ctx.stroke();
-}
-/* Spirale zeichnen */
-function drawSpiral(cx, cy, r) {
-    const glow = ctx.createRadialGradient(cx, cy, r*0.4, cx, cy, r*1.5);
-    glow.addColorStop(0, 'rgba(255, 215, 0, 0.6)');
-    glow.addColorStop(1, 'rgba(255, 215, 0, 0)');
-    ctx.fillStyle = glow;
-    ctx.beginPath();
-    ctx.arc(cx,cy,r*1.5,0,Math.PI*2);
-    ctx.fill();
-    const grad = ctx.createRadialGradient(cx-r*0.3, cy-r*0.3, 0, cx, cy, r);
-    grad.addColorStop(0, '#fff4cc');
-    grad.addColorStop(0.5, '#ffc107');
-    grad.addColorStop(1, '#d39e00');
-    ctx.fillStyle = grad;
-    ctx.beginPath();
-    ctx.arc(cx,cy,r,0,Math.PI*2);
-    ctx.fill();
-    ctx.beginPath();
-    ctx.arc(cx,cy,r*0.7,0,Math.PI*2);
-    ctx.strokeStyle = 'rgba(255,255,255,0.7)';
-    ctx.lineWidth = 2;
-    ctx.stroke();
-    // drehende Linien
-    ctx.save();
-    ctx.translate(cx,cy);
-    const timeRot = (performance.now()/1500) % (Math.PI*2);
-    ctx.rotate(timeRot);
-    ctx.strokeStyle = '#856404'; ctx.lineCap='round'; ctx.lineWidth = Math.max(2, r*0.1);
-    ctx.beginPath();
-    for (let i=0; i<120; i++) {
-        const t = i/120;
-        const a = t * 4 * Math.PI * 2 - Math.PI/2;
-        const rad = r * (1 - t * 0.65);
-        const x = Math.cos(a)*rad;
-        const y = Math.sin(a)*rad;
-        if (i === 0) ctx.moveTo(x,y);
-        else ctx.lineTo(x,y);
-    }
-    ctx.stroke();
-    ctx.restore();
+/* =========================
+   PHYSICS
+========================= */
+
+function physics(){
+
+    let ax=0;
+    let ay=0;
+
+    if(keys.left) ax-=0.4;
+    if(keys.right) ax+=0.4;
+    if(keys.up) ay-=0.4;
+    if(keys.down) ay+=0.4;
+
+    ax+=gravityX*.2;
+    ay+=gravityY*.2;
+
+    ball.vx+=ax;
+    ball.vy+=ay;
+
+    ball.vx*=0.98;
+    ball.vy*=0.98;
+
+    ball.x+=ball.vx;
+    ball.y+=ball.vy;
+
+    collisions();
 }
 
-/* ======= Physik und Kollisionen ======= */
-function physics(dt) {
-    let ax = -gravityX * accPower, ay = -gravityY * accPower;
-    if (keys.left) ax -= accPower;
-    if (keys.right) ax += accPower;
-    if (keys.up) ay -= accPower;
-    if (keys.down) ay += accPower;
-    ax += input.ax; ay += input.ay;
-    ball.vx += ax*dt;
-    ball.vy += ay*dt;
-    const s = Math.hypot(ball.vx, ball.vy);
-    if (s > maxSpeed) {
-        const k = maxSpeed/s;
-        ball.vx *= k; ball.vy *= k;
-    }
-    ball.vx *= Math.pow(friction, dt*60);
-    ball.vy *= Math.pow(friction, dt*60);
-    ball.x += ball.vx * dt;
-    ball.y += ball.vy * dt;
-    resolveWallCollisions();
-    // Kollisionsprüfung mit Löchern
-    for (const h of holeTiles) {
-        const cx = (h.x+0.5)*tileSize, cy = (h.y+0.5)*tileSize;
-        if (Math.hypot(ball.x-cx, ball.y-cy) < tileSize*0.35) {
-            // Falle in Loch
-            return lost();
+/* =========================
+   COLLISIONS
+========================= */
+
+function collisions(){
+
+    for(const h of holes){
+
+        const cx=(h.x+.5)*tileSize;
+        const cy=(h.y+.5)*tileSize;
+
+        if(Math.hypot(ball.x-cx,ball.y-cy)<tileSize*.25){
+
+            /* NEW RESPAWN SYSTEM */
+
+            resetBall();
+
+            document.getElementById("msg")
+            .textContent="Respawned at start.";
+
+            return;
         }
     }
-    // Zielprüfen
-    const gx = (goalPos.x+0.5)*tileSize, gy = (goalPos.y+0.5)*tileSize;
-    if (Math.hypot(ball.x-gx, ball.y-gy) < tileSize*0.35) {
-        return win();
-    }
-    // Pfadaufzeichnung
-    if (state.trace) {
-        if (state.path.length === 0 ||
-            Math.hypot(ball.x - state.path.at(-1).x, ball.y - state.path.at(-1).y) > 6) {
-            state.path.push({x:ball.x, y:ball.y});
-        }
-        if (state.path.length > 800) state.path.shift();
-    }
-}
-function resolveWallCollisions() {
-    const minX = Math.floor((ball.x - ball.r) / tileSize);
-    const maxX = Math.floor((ball.x + ball.r) / tileSize);
-    const minY = Math.floor((ball.y - ball.r) / tileSize);
-    const maxY = Math.floor((ball.y + ball.r) / tileSize);
-    for (let ty = minY; ty <= maxY; ty++) {
-        for (let tx = minX; tx <= maxX; tx++) {
-            if (ty < 0 || ty >= rows || tx < 0 || tx >= cols) continue;
-            if (MAZE[ty][tx] !== 'W') continue;
-            const rx = tx*tileSize, ry = ty*tileSize;
-            const closestX = Math.max(rx, Math.min(ball.x, rx+tileSize));
-            const closestY = Math.max(ry, Math.min(ball.y, ry+tileSize));
-            const dx = ball.x - closestX, dy = ball.y - closestY;
-            const dist2 = dx*dx + dy*dy;
-            if (dist2 < ball.r*ball.r) {
-                const dist = Math.sqrt(dist2) || 0.001;
-                const overlap = ball.r - dist;
-                const nx = dx/dist, ny = dy/dist;
-                ball.x += nx*overlap;
-                ball.y += ny*overlap;
-                const vdot = ball.vx*nx + ball.vy*ny;
-                ball.vx -= 1.6*vdot*nx;
-                ball.vy -= 1.6*vdot*ny;
-                ball.vx *= 0.75;
-                ball.vy *= 0.75;
-            }
-        }
+
+    const gx=(goalPos.x+.5)*tileSize;
+    const gy=(goalPos.y+.5)*tileSize;
+
+    if(Math.hypot(ball.x-gx,ball.y-gy)<tileSize*.3){
+
+        running=false;
+
+        document.getElementById("msg")
+        .textContent="You escaped the maze!";
+
+        setTimeout(()=>{
+            document.getElementById("mazeScreen")
+            .classList.remove("hidden");
+        },1200);
     }
 }
 
-/* ======= Spielzustand-Handler ======= */
-function resetBall() {
-    if (!MAZE) return;
-    startPos = findTile('S');
-    goalPos = findTile('G');
-    holeTiles = findAllTiles('O');
-    ball.x = (startPos.x+0.5)*tileSize;
-    ball.y = (startPos.y+0.5)*tileSize;
-    ball.vx = 0; ball.vy = 0;
-    state.message = '';
-    state.path = [];
-}
-function lost() {
-    // Spieler fällt ins Loch: Kugel zurücksetzen, aber Spiel fortsetzen
-    state.message = 'In ein Loch gefallen! Neu versuchen…';
-    resetBall();
-    state.running = true;
-    return;
-}
-function win() {
-    state.message = 'Du hast die Spirale erreicht! Glückwunsch.';
-    ball.vx = ball.vy = 0;
-    state.running = false;
-    // nach kurzer Zeit neu starten
-    setTimeout(resetBall, 1500);
-}
+/* =========================
+   LOOP
+========================= */
 
-/* ======= Eingaben ======= */
-window.addEventListener('keydown', e => {
-    if (e.key==="ArrowLeft"||e.key==="a") { keys.left=true; e.preventDefault(); }
-    if (e.key==="ArrowRight"||e.key==="d") { keys.right=true; e.preventDefault(); }
-    if (e.key==="ArrowUp"||e.key==="w") { keys.up=true; e.preventDefault(); }
-    if (e.key==="ArrowDown"||e.key==="s") { keys.down=true; e.preventDefault(); }
-});
-window.addEventListener('keyup', e => {
-    if (["ArrowLeft","a"].includes(e.key)) keys.left = false;
-    if (["ArrowRight","d"].includes(e.key)) keys.right = false;
-    if (["ArrowUp","w"].includes(e.key)) keys.up = false;
-    if (["ArrowDown","s"].includes(e.key)) keys.down = false;
-});
+function loop(){
 
-/* Pointer-Drag-Steuerung */
-canvas.addEventListener('pointerdown', e => {
-    pointer.down = true;
-    pointer.startX = e.clientX;
-    pointer.startY = e.clientY;
-    canvas.setPointerCapture(e.pointerId);
-});
-canvas.addEventListener('pointermove', e => {
-    if (!pointer.down) return;
-    input.ax = (e.clientX - pointer.startX) * 12;
-    input.ay = (e.clientY - pointer.startY) * 12;
-});
-canvas.addEventListener('pointerup', e => {
-    pointer.down = false;
-    input.ax = input.ay = 0;
-    canvas.releasePointerCapture?.(e.pointerId);
-});
+    requestAnimationFrame(loop);
 
-/* UI Buttons */
-document.getElementById('btn-play').onclick = () => {
-    document.getElementById('start-screen').classList.add('hidden');
-    // Labyrinth-Auswahl bleibt sichtbar (wurde im Startscreen integriert)
-};
-document.getElementById('btn-howto').onclick = () => {
-    document.getElementById('howto-screen').classList.remove('hidden');
-};
-document.getElementById('btn-back-howto').onclick = () => {
-    document.getElementById('howto-screen').classList.add('hidden');
-};
+    if(!running) return;
 
-// Zurück von Spiel zu Auswahl
-document.getElementById('back-from-game').onclick = () => {
-    state.running = false;
-    document.getElementById('start-screen').classList.remove('hidden');
-    // Auswahl zurücksetzen
-    document.querySelectorAll('.maze-option').forEach(o => o.classList.remove('selected'));
-};
-
-/* ======= Fenstergrößenänderung ======= */
-function adjustCanvas() {
-    const sz = Math.min(window.innerWidth-40, window.innerHeight-40, 720);
-    canvas.width = sz;
-    canvas.height = sz;
-    if (!MAZE) return;
-    tileSize = Math.min(canvas.width/cols, canvas.height/rows);
-    radius = tileSize*0.35;
-    ball.r = radius;
-}
-window.addEventListener('resize', adjustCanvas);
-
-/* ======= Spiel-Loop ======= */
-function step(now) {
-    if (!state.running) { state.lastTime = now; requestAnimationFrame(step); return; }
-    if (!state.lastTime) state.lastTime = now;
-    const dt = Math.min(0.03, (now - state.lastTime) / 1000);
-    state.lastTime = now;
-    physics(dt);
+    physics();
     draw();
-    requestAnimationFrame(step);
 }
 
-/* ======= Spielstart mit gewähltem Labyrinth ======= */
-function startGameWithMaze(maze) {
-    // Prüfcode: Bewegungsrechte
-    if (!window.DeviceMotionEvent || typeof DeviceMotionEvent.requestPermission !== 'function') {
-        // Keine explizite Erlaubnis nötig -> Gleich starten
-    }
-    // Kopie verwenden
-    let chosen = maze.map(r => r.slice());
-    MAZE = chosen;
-    rows = MAZE.length;
-    cols = MAZE[0].length;
-    tileSize = Math.min(canvas.width/cols, canvas.height/rows);
-    radius = tileSize*0.35;
-    ball.r = radius;
-    resetBall();
-    state.running = true;
-    state.lastTime = null;
-    // Startbildschirm ausblenden
-    document.getElementById('start-screen').classList.add('hidden');
-    adjustCanvas();
-}
+loop();
 
-/* ======= Init ======= */
-window.addEventListener('load', () => {
-    // Vorschauen neu zeichnen
-    for (let i = 0; i < MAZES.length; i++) {
-        drawPreviewToCanvas(document.getElementById('preview-' + i), MAZES[i]);
-    }
-    adjustCanvas();
-    // Eventlistener für Options
-    const options = document.querySelectorAll('.maze-option');
-    options.forEach(opt => {
-        opt.addEventListener('click', () => {
-            options.forEach(o => o.classList.remove('selected'));
-            opt.classList.add('selected');
-            const idx = Number(opt.dataset.index);
-            setTimeout(() => {
-                startGameWithMaze(MAZES[idx]);
-            }, 100);
-        });
-    });
-    // Animation starten
-    requestAnimationFrame(step);
+/* =========================
+   INPUT
+========================= */
+
+window.addEventListener("keydown",e=>{
+
+    if(e.key==="ArrowLeft") keys.left=true;
+    if(e.key==="ArrowRight") keys.right=true;
+    if(e.key==="ArrowUp") keys.up=true;
+    if(e.key==="ArrowDown") keys.down=true;
+
 });
+
+window.addEventListener("keyup",e=>{
+
+    if(e.key==="ArrowLeft") keys.left=false;
+    if(e.key==="ArrowRight") keys.right=false;
+    if(e.key==="ArrowUp") keys.up=false;
+    if(e.key==="ArrowDown") keys.down=false;
+
+});
+
+/* DEVICE TILT */
+
+window.addEventListener("deviceorientation",e=>{
+
+    gravityX=e.gamma/45;
+    gravityY=e.beta/45;
+
+});
+
+/* =========================
+   SCREENS
+========================= */
+
+function hideAllScreens(){
+
+    document.querySelectorAll(".screen")
+    .forEach(s=>s.classList.add("hidden"));
+}
+
+/* =========================
+   BUTTONS
+========================= */
+
+document.getElementById("playBtn")
+.onclick=()=>{
+
+    hideAllScreens();
+
+    document.getElementById("mazeScreen")
+    .classList.remove("hidden");
+};
+
+document.getElementById("howBtn")
+.onclick=()=>{
+
+    hideAllScreens();
+
+    document.getElementById("helpScreen")
+    .classList.remove("hidden");
+};
+
+document.getElementById("backFromHelp")
+.onclick=()=>{
+
+    hideAllScreens();
+
+    document.getElementById("startScreen")
+    .classList.remove("hidden");
+};
+
+document.getElementById("backToMenu")
+.onclick=()=>{
+
+    hideAllScreens();
+
+    document.getElementById("startScreen")
+    .classList.remove("hidden");
+};
+
+document.getElementById("backToMazes")
+.onclick=()=>{
+
+    running=false;
+
+    hideAllScreens();
+
+    document.getElementById("mazeScreen")
+    .classList.remove("hidden");
+};
+
+document.getElementById("restart")
+.onclick=resetBall;
+
+/* MAZE BUTTONS */
+
+document.querySelectorAll(".maze-option")
+.forEach(btn=>{
+
+    btn.onclick=()=>{
+
+        startMaze(
+            Number(btn.dataset.maze)
+        );
+
+    };
+
+});
+
+/* =========================
+   PREVIEWS
+========================= */
+
+function drawPreview(canvasEl,maze){
+
+    const c=canvasEl.getContext("2d");
+
+    const size=canvasEl.width/maze[0].length;
+
+    for(let y=0;y<maze.length;y++){
+        for(let x=0;x<maze[0].length;x++){
+
+            c.fillStyle=
+            maze[y][x]==="W"
+            ? "#4a2f1d"
+            : "#cd9a5b";
+
+            c.fillRect(
+                x*size,
+                y*size,
+                size,
+                size
+            );
+
+            if(maze[y][x]==="O"){
+
+                c.fillStyle="black";
+
+                c.beginPath();
+
+                c.arc(
+                    x*size+size/2,
+                    y*size+size/2,
+                    size*.2,
+                    0,
+                    Math.PI*2
+                );
+
+                c.fill();
+            }
+        }
+    }
+}
+
+drawPreview(preview0,MAZE_EASY);
+drawPreview(preview1,MAZE_MED);
+drawPreview(preview2,MAZE_HARD);
+
 </script>
 </body>
 </html>
